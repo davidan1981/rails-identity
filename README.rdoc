@@ -1,0 +1,10 @@
+= RailsIdentity
+
+This project rocks and uses MIT-LICENSE.
+
+RailsIdentity is a simple Rails engine that provides JWT-based session
+management for your Rails app. This is suitable for pure RESTful API
+development. No cookies. No non-unique IDs. It is WORK IN PROGRESS and
+currently supports very simple auth scenario.
+
+More documentation coming soon.
