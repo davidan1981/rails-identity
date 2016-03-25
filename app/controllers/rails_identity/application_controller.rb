@@ -43,9 +43,13 @@ module RailsIdentity
         return obj
       end
 
+      def token()
+        t = params[:token]
+      end
+
       # Requires a session for an action. Token must be specified in query
       # string or part of the JSON object.
-      def require_token(required_role: 0)
+      def require_token(required_role: 0, suppress_error: false)
         begin 
           token = params[:token]
           decoded = JWT.decode token, nil, false
@@ -60,8 +64,10 @@ module RailsIdentity
           raise "Session is not valid" unless session
           JWT.decode token, session.secret, true
         rescue
-          logger.warn("Invalid token")
-          raise Errors::InvalidTokenError
+          if !suppress_error
+            logger.warn("Invalid token")
+            raise Errors::InvalidTokenError
+          end
         end
         @token = token
         @session = session

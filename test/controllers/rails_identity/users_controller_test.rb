@@ -37,6 +37,26 @@ module RailsIdentity
       assert !json.has_key?("password_digest")
     end 
 
+    test "user cannot create an admin user" do
+      post :create, username: "foo@example.com", password: "secret",
+           password_confirmation: "secret", role: 1000
+      assert_response :success
+      user = assigns(:user)
+      assert_not_nil user
+      assert_equal 100, user.role
+    end
+
+    test "admin can create an admin user" do
+      @session = rails_identity_sessions(:admin_one)
+      @token = @session.token
+      post :create, username: "foo@example.com", password: "secret",
+           password_confirmation: "secret", role: 1000, token: @token
+      assert_response :success
+      user = assigns(:user)
+      assert_not_nil user
+      assert_equal 1000, user.role
+    end
+
     test "cannot create a user without username" do
       post :create, password: "secret",
            password_confirmation: "secret"

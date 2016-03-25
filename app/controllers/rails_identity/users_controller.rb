@@ -16,6 +16,7 @@ module RailsIdentity
     end
 
     def create
+      require_token(suppress_error: true)
       @user = User.new(user_params)
       if @user.save
         render json: @user, except: [:password_digest], status: 201
@@ -52,7 +53,11 @@ module RailsIdentity
       end
 
       def user_params
-        params.permit(:username, :password, :password_confirmation)
+        if @auth_user.try(:role).try(:>=, 1000)
+          params.permit(:username, :password, :password_confirmation, :role)
+        else
+          params.permit(:username, :password, :password_confirmation)
+        end
       end 
 
   end
