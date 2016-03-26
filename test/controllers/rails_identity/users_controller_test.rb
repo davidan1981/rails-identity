@@ -14,7 +14,7 @@ module RailsIdentity
       @request.headers["Access-Control-Request-Headers"] = "GET"
       get :options
       assert_response :success
-      assert_equal "GET", @request.headers["Access-Control-Allow-Headers"]
+      assert_equal "GET", @response.headers["Access-Control-Allow-Headers"]
     end
 
     test "admin can list all users" do 
