@@ -14,7 +14,7 @@ gemspec
 # gem 'byebug', group: [:development, :test]
 
 gem 'bcrypt', '~> 3.1.7'
-gem 'uuidtools'
-gem 'jwt'
+gem 'uuidtools', '~> 2.1.5'
+gem 'jwt', '~> 1.5.4'
 gem "paranoia", "~> 2.0"
 gem 'simplecov', :require => false, :group => :test
