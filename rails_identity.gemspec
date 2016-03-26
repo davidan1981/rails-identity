@@ -5,13 +5,13 @@ require "rails_identity/version"
 
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
-  s.name        = "rails_identity"
+  s.name        = "rails-identity"
   s.version     = RailsIdentity::VERSION
   s.authors     = ["David An"]
   s.email       = ["davidan1981@gmail.com"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of RailsIdentity."
-  s.description = "TODO: Description of RailsIdentity."
+  s.homepage    = "https://github.com/davidan42/rails_identity"
+  s.summary     = "RailsIdentity is a Rails engine with a simple auth system."
+  s.description = ""
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
