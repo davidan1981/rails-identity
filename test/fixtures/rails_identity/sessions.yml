@@ -10,7 +10,7 @@ one:
   token: <%= JWT.encode({
                session_uuid: "1",
                user_uuid: "1",
-               role: 100,
+               role: RailsIdentity::Roles::USER,
                exp: (Time.now.to_i + 14 * 3600)
              }, "secret", 'HS256') %>
   secret: secret
@@ -20,7 +20,7 @@ two:
   token: <%= JWT.encode({
                session_uuid: "2",
                user_uuid: "2",
-               role: 100,
+               role: RailsIdentity::Roles::USER,
                exp: (Time.now.to_i + 14 * 3600)
              }, "secret", 'HS256') %>
   secret: secret
@@ -30,7 +30,7 @@ admin_one:
   token: <%= JWT.encode({
                session_uuid: "session_admin_one",
                user_uuid: "admin_one",
-               role: 1000,
+               role: RailsIdentity::Roles::ADMIN,
                exp: (Time.now.to_i + 14 * 3600)
              }, "secret", "HS256") %>
   secret: secret

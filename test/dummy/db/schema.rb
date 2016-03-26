@@ -27,11 +27,11 @@ ActiveRecord::Schema.define(version: 20160323210017) do
     t.string   "uuid"
     t.string   "username"
     t.string   "password_digest"
-    t.integer  "role",            default: 100
+    t.integer  "role"
     t.string   "metadata"
     t.datetime "deleted_at"
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
   end
 
   add_index "rails_identity_users", ["deleted_at"], name: "index_rails_identity_users_on_deleted_at"

@@ -11,7 +11,7 @@ module RailsIdentity
       render json: @sessions, except: [:secret]
     end
 
-    # This action is essentially the login action
+    # This action is essentially the login action.
     def create
       @user = User.find_by_username(session_params[:username])
       if @user and @user.authenticate(session_params[:password])
@@ -23,7 +23,7 @@ module RailsIdentity
             render_errors 400, @session.full_error_messages
           end
         else
-          render_errors 400, "Session cannot be created"
+          render_error 400, "Session cannot be created"
         end
       else
         render_error 401, "Invalid username or password"

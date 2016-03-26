@@ -8,12 +8,14 @@ one:
   uuid: "1"
   username: one@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
+  role: <%= RailsIdentity::Roles::USER %>
 two:
   uuid: "2"
   username: two@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
+  role: <%= RailsIdentity::Roles::USER %>
 admin_one:
   uuid: "admin_one"
   username: admin_one@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
-  role: 1000
+  role: <%= RailsIdentity::Roles::ADMIN %>

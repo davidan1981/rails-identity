@@ -53,7 +53,7 @@ module RailsIdentity
       end
 
       def user_params
-        if @auth_user.try(:role).try(:>=, 1000)
+        if @auth_user.try(:role).try(:>=, Roles::ADMIN)
           params.permit(:username, :password, :password_confirmation, :role)
         else
           params.permit(:username, :password, :password_confirmation)

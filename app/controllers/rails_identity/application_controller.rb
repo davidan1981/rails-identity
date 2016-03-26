@@ -1,29 +1,23 @@
 module RailsIdentity
   class ApplicationController < ActionController::Base
     include ApplicationHelper
-    # Prevent CSRF attacks by raising an exception.
-    # For APIs, you may want to use :null_session instead.
-    # protect_from_forgery with: :exception
 
-    # Most actions require a session token. If it is invalid, rescue the
-    # exception and throw a 401 response.
+    # Most actions require a session token. If token is invalid, rescue the
+    # exception and throw an HTTP 401 response.
     rescue_from Errors::InvalidTokenError, with: :invalid_token_error
 
-    # Some actions require an object via id
+    # Some actions require a resource object via id. If no such object
+    # exists, throw an HTTP 404 response.
     rescue_from Errors::ObjectNotFoundError do |exception|
       render_error 404, exception.message
     end
 
-    # Authenticated but not authorized for the action
+    # The request is authenticated but not authorized for the specified
+    # action. Throw an HTTP 401 response.
     rescue_from Errors::UnauthorizedError, with: :unauthorized_error
 
-    def invalid_token_error
-      render_error 401, "Invalid token"
-    end
-
-    def unauthorized_error
-      render_error 401, "Unauthorized request"
-    end
+    def invalid_token_error; render_error 401, "Invalid token" end
+    def unauthorized_error; render_error 401, "Unauthorized request" end
 
     def options()
       # echo back access-control-request-headers
@@ -43,13 +37,9 @@ module RailsIdentity
         return obj
       end
 
-      def token()
-        t = params[:token]
-      end
-
       # Requires a session for an action. Token must be specified in query
       # string or part of the JSON object.
-      def require_token(required_role: 0, suppress_error: false)
+      def require_token(required_role: Roles::PUBLIC, suppress_error: false)
         begin 
           token = params[:token]
           decoded = JWT.decode token, nil, false
@@ -77,11 +67,11 @@ module RailsIdentity
       # Requires an admin session. All this means is that the session is
       # issued for an admin user (role == 1000).
       def require_admin_token
-        require_token(required_role: 1000)
+        require_token(required_role: Roles::ADMIN)
       end
 
       def authorized?(user)
-        return (@auth_user.role >= 1000) || (user == @auth_user)
+        return (@auth_user.role >= Roles::ADMIN) || (user == @auth_user)
       end
   end
 end

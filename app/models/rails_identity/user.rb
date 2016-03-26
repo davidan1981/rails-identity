@@ -15,7 +15,7 @@ module RailsIdentity
     alias_attribute :email, :username
 
     def default_role
-      self.role ||= 100
+      self.role ||= Roles::USER
     end
 
   end

@@ -7,7 +7,7 @@ module RailsIdentity
       session = Session.new(user: rails_identity_users(:one))
       assert_not_nil session.secret
       assert_not_nil session.token
-      assert_equal 100, JWT.decode(session.token, nil, false)[0]["role"]
+      assert_equal Roles::USER, JWT.decode(session.token, nil, false)[0]["role"]
     end
 
     test "save a session" do
