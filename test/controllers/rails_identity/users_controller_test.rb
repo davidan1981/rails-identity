@@ -10,6 +10,11 @@ module RailsIdentity
       @token = @session.token
     end
 
+    test "public can see options" do
+      get :options
+      assert_response :success
+    end
+
     test "admin can list all users" do 
       @session = rails_identity_sessions(:admin_one)
       @token = @session.token

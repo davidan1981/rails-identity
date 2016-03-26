@@ -8,6 +8,11 @@ module RailsIdentity
       @token = @session.token
     end
 
+    test "public can see options" do
+      get :options
+      assert_response :success
+    end
+
     test "user can list all his sessions" do 
       get :index, token: @token
       assert_response :success
