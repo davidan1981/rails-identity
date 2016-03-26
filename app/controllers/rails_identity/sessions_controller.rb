@@ -16,14 +16,12 @@ module RailsIdentity
       @user = User.find_by_username(session_params[:username])
       if @user and @user.authenticate(session_params[:password])
         @session = Session.new(user: @user)
-        if @session
-          if @session.save
-            render json: @session, except: [:secret], status: 201
-          else
-            render_errors 400, @session.full_error_messages
-          end
+        if @session.save
+          render json: @session, except: [:secret], status: 201
         else
-          render_error 400, "Session cannot be created"
+          # :nocov:
+          render_errors 400, @session.full_error_messages
+          # :nocov:
         end
       else
         render_error 401, "Invalid username or password"
@@ -37,8 +35,10 @@ module RailsIdentity
     def destroy
       if @session.destroy
         render body: "", status: 204
-      else
+      else 
+        # :nocov:
         render_error 500, "Something went wrong. Oops!"
+        # :nocov:
       end
     end
 

@@ -105,6 +105,11 @@ module RailsIdentity
       assert json["username"] = "foo@example.com"
     end
 
+    test "cannot update invalid email" do
+      patch :update, id: 1, username: 'foobar', token: @token
+      assert_response 400
+    end
+
     test "cannot update another user" do
       patch :update, id: 2, username: 'foo@example.com', token: @token
       assert_response 401

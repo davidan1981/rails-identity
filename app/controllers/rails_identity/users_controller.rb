@@ -41,7 +41,9 @@ module RailsIdentity
       if @user.destroy
         render body: '', status: 204
       else
+        # :nocov:
         render_error 500, "Something went wrong!"
+        # :nocov:
       end
     end
 
@@ -53,6 +55,8 @@ module RailsIdentity
       end
 
       def user_params
+        # Only ADMIN can assign the attribute role. The attribute value will
+        # be ignored if the user is not an ADMIN.
         if @auth_user.try(:role).try(:>=, Roles::ADMIN)
           params.permit(:username, :password, :password_confirmation, :role)
         else
