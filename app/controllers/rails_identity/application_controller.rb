@@ -29,11 +29,29 @@ module RailsIdentity
 
     protected
 
+      # Helper method to get the user object in the request context. There
+      # are two ways to specify the user id--one in the routing or the auth
+      # context. Only admin can actually specify the user id in the routing.
+      def get_user(fallback: true)
+        if params[:user_id]
+          @user = find_object(User, params[:user_id])  # will throw error if nil
+          raise Errors::UnauthorizedError unless authorized?(@user)
+        elsif fallback
+          @user = @auth_user
+        else
+          # :nocov:
+          raise Errors::ObjectNotFoundError
+          # :nocov:
+        end
+      end
+
       # Finds an object by model and UUID and throws an error (which will be
       # caught and re-thrown as an HTTP error.)
       def find_object(model, uuid, error=Errors::ObjectNotFoundError)
         obj = model.find_by_uuid(uuid)
-        raise error, "#{model.name} #{uuid} cannot be found" if obj.nil? && !error.nil?
+        if obj.nil? && !error.nil?
+          raise error, "#{model.name} #{uuid} cannot be found" 
+        end
         return obj
       end
 

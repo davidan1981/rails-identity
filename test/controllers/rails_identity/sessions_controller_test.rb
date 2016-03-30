@@ -25,6 +25,23 @@ module RailsIdentity
       end
     end
 
+    test "user can list all his sessions using user id in routing" do
+      get :index, user_id: @session.user.id, token: @token
+      assert_response :success
+      sessions = assigns(:sessions)
+      assert_not_nil sessions
+      all_his_sessions = Session.where(user: @session.user)
+      assert_equal sessions.length, all_his_sessions.length
+      sessions.each do |session|
+        assert session.user == @session.user
+      end
+    end
+
+    test "user cannot list other's sessions" do
+      get :index, user_id: rails_identity_users(:two), token: @token
+      assert_response 401
+    end
+
     test "public cannot list sessions" do
       get :index
       assert_response 401
