@@ -24,7 +24,7 @@ module RailsIdentity
       assert_response :success
       users = assigns(:users)
       assert_not_nil users
-      assert users.length == Session.count
+      assert_equal Session.count, users.length
     end
 
     test "non-admin cannot list users" do
@@ -40,8 +40,8 @@ module RailsIdentity
       assert_not_nil user
       assert user.username = "foo@example.com"
       json = JSON.parse(@response.body)
-      assert json["username"] = "foo@example.com"
-      assert !json.has_key?("password_digest")
+      assert_equal "foo@example.com", json["username"]
+      assert_not json.has_key?("password_digest")
     end 
 
     test "user cannot create an admin user" do
@@ -76,14 +76,21 @@ module RailsIdentity
       post :create, username: "foo@example.com"
       assert_response 400
       json = JSON.parse(@response.body)
-      assert json["errors"].length == 1
+      assert_equal 1, json["errors"].length
     end 
 
     test "show a user" do
       get :show, id: 1, token: @token
       assert_response 200
       json = JSON.parse(@response.body)
-      assert json["username"] = rails_identity_users(:one).username
+      assert_equal rails_identity_users(:one).username, json["username"]
+    end
+
+    test "show a current user" do
+      get :show, id: "current", token: @token
+      assert_response 200
+      json = JSON.parse(@response.body)
+      assert_equal rails_identity_users(:one).username, json["username"]
     end
 
     test "cannot show other user" do
@@ -102,14 +109,21 @@ module RailsIdentity
       get :show, id: 999, token: @token
       assert_response 404
       json = JSON.parse(@response.body)
-      assert json["errors"].length == 1
+      assert_equal 1, json["errors"].length
     end
 
     test "update a user" do
       patch :update, id: 1, username: 'foo@example.com', token: @token
       assert_response 200
       json = JSON.parse(@response.body)
-      assert json["username"] = "foo@example.com"
+      assert_equal "foo@example.com", json["username"]
+    end
+
+    test "update current user" do
+      patch :update, id: "current", username: 'foo@example.com', token: @token
+      assert_response 200
+      json = JSON.parse(@response.body)
+      assert_equal "foo@example.com", json["username"]
     end
 
     test "cannot update invalid email" do
@@ -124,6 +138,11 @@ module RailsIdentity
 
     test "delete a user" do
       delete :destroy, id: 1, token: @token
+      assert_response 204
+    end
+
+    test "delete current user" do
+      delete :destroy, id: "current", token: @token
       assert_response 204
     end
 

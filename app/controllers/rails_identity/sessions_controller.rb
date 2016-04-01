@@ -50,7 +50,11 @@ module RailsIdentity
     private
 
       def get_session
-        @session = find_object(Session, params[:id])
+        session_id = params[:id]
+        if session_id == "current"
+          session_id = @auth_session.id
+        end
+        @session = find_object(Session, session_id)
         raise Errors::UnauthorizedError unless authorized?(@session.user)
       end
 

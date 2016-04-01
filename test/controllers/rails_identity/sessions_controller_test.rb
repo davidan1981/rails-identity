@@ -95,7 +95,14 @@ module RailsIdentity
       get :show, id: 1, token: @token
       assert_response 200
       json = JSON.parse(@response.body)
-      assert !json["token"].nil?
+      assert_equal @token, json["token"]
+    end
+
+    test "show a current session" do
+      get :show, id: "current", token: @token
+      assert_response 200
+      json = JSON.parse(@response.body)
+      assert_equal @token, json["token"]
     end
 
     test "cannot show other's session" do
@@ -108,6 +115,9 @@ module RailsIdentity
       @token = @session.token
       get :show, id: 1, token: @token
       assert_response :success
+      json = JSON.parse(@response.body)
+      session = rails_identity_sessions(:one)
+      assert_equal session.token, json["token"]
     end
 
     test "cannot show a nonexisting session" do
@@ -119,6 +129,11 @@ module RailsIdentity
 
     test "delete a session" do
       delete :destroy, id: 1, token: @token
+      assert_response 204
+    end
+
+    test "delete a current session" do
+      delete :destroy, id: "current", token: @token
       assert_response 204
     end
 

@@ -33,10 +33,11 @@ module RailsIdentity
       # are two ways to specify the user id--one in the routing or the auth
       # context. Only admin can actually specify the user id in the routing.
       def get_user(fallback: true)
-        if params[:user_id]
+        user_id = params[:user_id]
+        if !user_id.nil? && user_id != "current"
           @user = find_object(User, params[:user_id])  # will throw error if nil
           raise Errors::UnauthorizedError unless authorized?(@user)
-        elsif fallback
+        elsif fallback || user_id == "current"
           @user = @auth_user
         else
           # :nocov:
@@ -78,7 +79,7 @@ module RailsIdentity
           end
         end
         @token = token
-        @session = session
+        @auth_session = session
         @auth_user = auth_user
       end
 

@@ -49,7 +49,11 @@ module RailsIdentity
 
     private
 
+      # This overrides the application controller's get_user method. Since
+      # resource object of this users controller is user, the id is
+      # specified in :id param.
       def get_user
+        params[:id] = @auth_user.id if params[:id] == "current"
         @user = find_object(User, params[:id])
         raise Errors::UnauthorizedError unless authorized?(@user)
       end
