@@ -17,6 +17,14 @@ module RailsIdentity
       assert user.save
     end
 
+    test "user can issue a reset token" do
+      user = User.new(username: "foo@example.com", password: "secret")
+      assert user.save
+      assert_nil user.reset_token
+      user.issue_reset_token
+      assert_not_nil user.reset_token
+    end
+
     test "user is not valid if username is malformatted" do
       user = User.new(username: "example.com", password: "secret")
       assert_not user.save

@@ -16,5 +16,11 @@ module RailsIdentity
       self.role ||= Roles::USER
     end
 
+    # This method will generate a reset token that lasts for an hour.
+    def issue_reset_token
+      session = Session.new(user: self, seconds: 3600)
+      self.reset_token = session.token
+    end
+
   end
 end

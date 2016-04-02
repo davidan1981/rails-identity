@@ -48,7 +48,7 @@ module RailsIdentity
 
       # Finds an object by model and UUID and throws an error (which will be
       # caught and re-thrown as an HTTP error.)
-      def find_object(model, uuid, error=Errors::ObjectNotFoundError)
+      def find_object(model, uuid, error: Errors::ObjectNotFoundError)
         obj = model.find_by_uuid(uuid)
         if obj.nil? && !error.nil?
           raise error, "#{model.name} #{uuid} cannot be found" 

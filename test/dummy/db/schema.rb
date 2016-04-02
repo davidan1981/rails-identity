@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160323210017) do
+ActiveRecord::Schema.define(version: 20160401223433) do
 
   create_table "rails_identity_sessions", force: :cascade do |t|
     t.string   "uuid"
@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(version: 20160323210017) do
     t.datetime "deleted_at"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
+    t.string   "reset_token"
   end
 
   add_index "rails_identity_users", ["deleted_at"], name: "index_rails_identity_users_on_deleted_at"

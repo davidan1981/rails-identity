@@ -6,8 +6,12 @@ module RailsIdentity
     belongs_to :user, foreign_key: "user_uuid", primary_key: "uuid"
     validates :user, presence: true
 
-    # Creates a session object. The attributes must include user.
-    def initialize(attributes={})
+    # Creates a session object. The attributes must include user. The secret
+    # to the JWT is generated here and is unique to the session being
+    # created. Since the JWT includes the session id, the secret can be
+    # retrieved.
+    def initialize(attributes = {})
+      seconds = attributes.delete(:seconds) || (24 * 3600 * 14)
       super
       self.uuid = UUIDTools::UUID.timestamp_create().to_s
       iat = Time.now.to_i
@@ -16,7 +20,7 @@ module RailsIdentity
         session_uuid: self.uuid,
         role: self.user.role,
         iat: iat,
-        exp: iat + 14 * 3600
+        exp: iat + seconds
       }
       self.secret = UUIDTools::UUID.random_create
       self.token = JWT.encode(payload, self.secret, 'HS256')

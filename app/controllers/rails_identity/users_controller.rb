@@ -2,14 +2,16 @@ require_dependency "rails_identity/application_controller"
 
 module RailsIdentity
   class UsersController < ApplicationController
-    # All except user creation requires a session token.
+
+    # All except user creation requires a session token. Note that reset
+    # token is also a legit session token, so :require_token will suffice.
     prepend_before_action :require_token, except: [:index, :create, :options]
     prepend_before_action :require_admin_token, only: [:index]
 
     # Some actions must have a user specified.
     before_action :get_user, only: [:show, :update, :destroy]
 
-    # List all users (but only works for admin user)
+    # List all users (but only works for admin user).
     def index
       @users = User.all
       render json: @users, except: [:password_digest]
@@ -29,7 +31,16 @@ module RailsIdentity
       render json: @user, except: [:password_digest], methods: [:role]
     end
 
+    # Patches the user. It updates :reset_token only if :issue_reset_token
+    # is set to true. It will not update :reset_token directly.
     def update
+      update_params = user_params
+
+      if params[:issue_reset_token]
+        @user.issue_reset_token
+        # maybe send the token via email?
+      end
+
       if @user.update_attributes(user_params)
         render json: @user, except: [:password_digest]
       else
