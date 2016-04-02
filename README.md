@@ -1,8 +1,6 @@
 # rails-identity
 
-![](https://travis-ci.org/davidan1981/rails-identity.svg?branch=master)
-
-[![Coverage
+![](https://travis-ci.org/davidan1981/rails-identity.svg?branch=master) [![Coverage
 Status](https://coveralls.io/repos/github/davidan1981/rails-identity/badge.svg?branch=master)](https://coveralls.io/github/davidan1981/rails-identity?branch=master)
 
 

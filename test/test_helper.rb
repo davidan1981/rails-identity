@@ -4,8 +4,8 @@ ENV["RAILS_ENV"] = "test"
 require 'simplecov'
 require 'coveralls'
 
-Coveralls.wear!('rails')
-
+# Coveralls.wear!('rails')
+SimpleCov.formatter = Coveralls::SimpleCov::Formatter
 SimpleCov.start do
   add_group "Models", "app/models"
   add_group "Controllers", "app/controllers"
