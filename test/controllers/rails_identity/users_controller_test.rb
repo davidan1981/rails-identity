@@ -139,6 +139,18 @@ module RailsIdentity
       assert_equal new_reset_token, json["reset_token"]
     end
 
+    test "update password using reset token" do
+      patch :update, id: 1, issue_reset_token: true, token: @token
+      assert_response 200
+      json = JSON.parse(@response.body)
+      new_reset_token = json["reset_token"]
+      assert_not_nil new_reset_token
+
+      # use reset token to update password
+      patch :update, id: 1, password: "newsecret", password_confirmation: "newsecret", token: new_reset_token
+      assert_response 200
+    end
+
     test "cannot update invalid email" do
       patch :update, id: 1, username: 'foobar', token: @token
       assert_response 400

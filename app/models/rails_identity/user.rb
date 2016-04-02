@@ -19,6 +19,7 @@ module RailsIdentity
     # This method will generate a reset token that lasts for an hour.
     def issue_reset_token
       session = Session.new(user: self, seconds: 3600)
+      session.save
       self.reset_token = session.token
     end
 
