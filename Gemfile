@@ -18,3 +18,4 @@ gem 'uuidtools', '~> 2.1.5'
 gem 'jwt', '~> 1.5.4'
 gem "paranoia", "~> 2.0"
 gem 'simplecov', :require => false, :group => :test
+gem 'coveralls', require: false

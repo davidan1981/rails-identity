@@ -2,6 +2,9 @@
 ENV["RAILS_ENV"] = "test"
 
 require 'simplecov'
+require 'coveralls'
+
+Coveralls.wear!('rails')
 
 SimpleCov.start do
   add_group "Models", "app/models"
