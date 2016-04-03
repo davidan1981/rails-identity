@@ -1,4 +1,8 @@
 module RailsIdentity
+
+  ##
+  # The root application controller class in rails-identity.
+  #
   class ApplicationController < ActionController::Base
     include ApplicationHelper
 
@@ -14,11 +18,24 @@ module RailsIdentity
 
     # The request is authenticated but not authorized for the specified
     # action. Throw an HTTP 401 response.
+    #
     rescue_from Errors::UnauthorizedError, with: :unauthorized_error
 
+    ##
+    # Renders 401 due to an invalid token.
+    #
     def invalid_token_error; render_error 401, "Invalid token" end
+
+    ##
+    # Renders 401 due to a unauthorized request.
+    #
     def unauthorized_error; render_error 401, "Unauthorized request" end
 
+    ##
+    # Renders a generic OPTIONS response. The actual controller must
+    # override this action if desired to have specific OPTIONS handling
+    # logic.
+    #
     def options()
       # echo back access-control-request-headers
       if request.headers["Access-Control-Request-Headers"]
@@ -29,9 +46,17 @@ module RailsIdentity
 
     protected
 
+      ##
       # Helper method to get the user object in the request context. There
       # are two ways to specify the user id--one in the routing or the auth
       # context. Only admin can actually specify the user id in the routing.
+      #
+      # A Errors::UnauthorizedError is raised if the authenticated user
+      # is not authorized for the specified user information.
+      #
+      # A Errors::ObjectNotFoundError is raised if the specified user cannot
+      # be found.
+      # 
       def get_user(fallback: true)
         user_id = params[:user_id]
         if !user_id.nil? && user_id != "current"
@@ -46,8 +71,13 @@ module RailsIdentity
         end
       end
 
+      ##
       # Finds an object by model and UUID and throws an error (which will be
       # caught and re-thrown as an HTTP error.)
+      #
+      # A Errors::ObjectNotFoundError is raised if specified to do so when
+      # the object could not be found using the uuid.
+      #
       def find_object(model, uuid, error: Errors::ObjectNotFoundError)
         obj = model.find_by_uuid(uuid)
         if obj.nil? && !error.nil?
@@ -56,8 +86,15 @@ module RailsIdentity
         return obj
       end
 
+      ##
       # Requires a session for an action. Token must be specified in query
       # string or part of the JSON object.
+      #
+      # A Errors::InvalidTokenError is raised if the JWT is malformed or not
+      # valid against its secret.
+      #
+      # TODO: Raise discrete error for various error cases.
+      #
       def require_token(required_role: Roles::PUBLIC, suppress_error: false)
         begin 
           token = params[:token]
@@ -83,12 +120,19 @@ module RailsIdentity
         @auth_user = auth_user
       end
 
+      ##
       # Requires an admin session. All this means is that the session is
       # issued for an admin user (role == 1000).
+      #
       def require_admin_token
         require_token(required_role: Roles::ADMIN)
       end
 
+      ##
+      # Determines if the user is authorized for the object.
+      #
+      # TODO: change this method to accept any object.
+      #
       def authorized?(user)
         return (@auth_user.role >= Roles::ADMIN) || (user == @auth_user)
       end

@@ -12,11 +12,16 @@ module RailsIdentity
 
     alias_attribute :email, :username
 
+    ##
+    # Sets the default the role for the user if not set.
+    #
     def default_role
       self.role ||= Roles::USER
     end
 
+    ##
     # This method will generate a reset token that lasts for an hour.
+    #
     def issue_reset_token
       session = Session.new(user: self, seconds: 3600)
       session.save

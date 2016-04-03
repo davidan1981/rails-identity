@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.authors     = ["David An"]
   s.email       = ["davidan1981@gmail.com"]
   s.homepage    = "https://github.com/davidan42/rails_identity"
-  s.summary     = "RailsIdentity is a Rails engine with a simple auth system."
-  s.description = ""
+  s.summary     = "rails-identity is a Rails engine that provides a simple JWT-based session management service."
+  s.description = "See README.md"
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
