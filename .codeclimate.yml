@@ -3,5 +3,3 @@ engines:
     enabled: true
   bundler-audit:
     enabled: true
-  csslint:
-    enabled: true
