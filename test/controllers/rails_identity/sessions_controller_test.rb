@@ -110,6 +110,11 @@ module RailsIdentity
       assert_response 401
     end
 
+    test "public cannot show session" do
+      get :show, id:1
+      assert_response 401
+    end
+
     test "admin can show other's session" do
       @session = rails_identity_sessions(:admin_one)
       @token = @session.token

@@ -83,7 +83,7 @@ module RailsIdentity
           session_id = @auth_session.id
         end
         @session = find_object(Session, session_id)
-        raise Errors::UnauthorizedError unless authorized?(@session.user)
+        raise Errors::UnauthorizedError unless authorized?(@session)
       end
 
       def session_params

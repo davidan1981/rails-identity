@@ -104,10 +104,10 @@ module RailsIdentity
           user_uuid = payload['user_uuid']
           logger.debug("Valid token for #{user_uuid}")
           auth_user = User.find_by_uuid(payload["user_uuid"])
-          raise "User is not valid" unless auth_user
+          raise "User is not valid" if auth_user.nil?
           raise "User has insufficient role" if auth_user.role < required_role
           session = Session.find_by_uuid(payload["session_uuid"])
-          raise "Session is not valid" unless session
+          raise "Session is not valid" if session.nil?
           JWT.decode token, session.secret, true
         rescue
           if !suppress_error
@@ -131,10 +131,18 @@ module RailsIdentity
       ##
       # Determines if the user is authorized for the object.
       #
-      # TODO: change this method to accept any object.
-      #
-      def authorized?(user)
-        return (@auth_user.role >= Roles::ADMIN) || (user == @auth_user)
+      def authorized?(obj)
+        if !@auth_user
+          # :nocov:
+          return false
+          # :nocov:
+        elsif @auth_user.role >= Roles::ADMIN
+          return true
+        elsif obj.is_a? User
+          return obj == @auth_user
+        else
+          return obj.user == @auth_user
+        end
       end
   end
 end

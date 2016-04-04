@@ -5,7 +5,10 @@ require 'simplecov'
 require 'coveralls'
 
 # Coveralls.wear!('rails')
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+])
 SimpleCov.start do
   add_group "Models", "app/models"
   add_group "Controllers", "app/controllers"
