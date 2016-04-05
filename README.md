@@ -21,11 +21,11 @@ it in your app's `Gemfile`:
 
 Then, add the following line in `application.rb`:
 
-    require 'rails-identity'
+    require 'rails_identity'
 
 And the following in `route.rb`:
 
-    require 'rails-identity'
+    require 'rails_identity'
 
     Rails.application.routes.draw do
       mount RailsIdentity::Engine, at: "/"
