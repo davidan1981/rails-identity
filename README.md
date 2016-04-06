@@ -48,7 +48,7 @@ Now you're ready. Run the server to test:
 Make a POST request on `/users` with `email`, `password`, and
 `password_confirmation` in the JSON payload.
 
-    http POST localhost:3000/users email=foo@example.com password="supersecret" password_confirmation="supersecret"
+    $ http POST localhost:3000/users email=foo@example.com password="supersecret" password_confirmation="supersecret"
 
 The response should be 201 if successful.
 
@@ -67,9 +67,9 @@ The response should be 201 if successful.
 
 ## Create Session
 
-A proper way to create a session is to use username and password. 
+A proper way to create a session is to use username and password:
 
-    http --auth foo@example.com:supersecret POST /sessions
+    $ http POST localhost:3000/sessions username=foo@example.com password=supersecret
 
     HTTP/1.1 201 Created
     {
@@ -82,6 +82,66 @@ A proper way to create a session is to use username and password.
         "uuid": "b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a"
     }
 
-# TODO
+This is the login process.
 
-The project is a work in progress.
+## Delete Session
+
+A session can be deleted via a DELETE method. This is essentially a logout
+process.
+
+    $ http DELETE localhost:3000/session/b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
+
+    HTTP/1.1 204 No Content
+
+NOTE: If you prefer not to use a token as a query parameter (due to a
+security concern), feel free to use it in a JSON payload.
+
+## Password Reset
+
+Since rails-identity is a RESTful service itself, password reset is done via
+a PATCH method on the user resource. But you must specify either the old
+password or a reset token. To use the old password:
+
+    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ old_password="supersecret" password="reallysecret" password_confirmation="reallysecret"
+
+To use a reset token, you must issue one first:
+
+    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIyMWQzNzFjNi1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTExLCJleHAiOjE0NjExMTcxMTF9.abPnKcB5-8cjbuuIp3q-vypPEvJoKXxV3lkLjPMxeLU issue_reset_token=true
+
+    HTTP/1.1 200 OK
+    {
+        "created_at": "2016-04-05T02:02:11.410Z",
+        "deleted_at": null,
+        "id": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
+        "metadata": null,
+        "reset_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg",
+        "role": 10,
+        "updated_at": "2016-04-06T01:52:34.085Z",
+        "username": "foo@example.com",
+        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a"
+    }
+
+Note that the response includes a JWT token that looks similar to a normal
+session token. Well, it _is_ a session token but with a shorter life span (1
+hour). So use it instead on the password reset request:
+
+    http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
+
+    HTTP/1.1 200 OK
+    {
+        "created_at": "2016-04-05T02:02:11.410Z",
+        "deleted_at": null,
+        "id": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
+        "metadata": null,
+        "reset_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg",
+        "role": 10,
+        "updated_at": "2016-04-06T01:55:45.163Z",
+        "username": "foo@example.com",
+        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a"
+    }
+
+
+## How to Authorize Request
+
+rails-identity is designed to be used in your app to authorize requests as
+well.

@@ -118,10 +118,28 @@ module RailsIdentity
     end
 
     test "update a user" do
+      user = rails_identity_users(:one)
+      old_password_digest = user.password_digest
       patch :update, id: 1, username: 'foo@example.com', token: @token
       assert_response 200
       json = JSON.parse(@response.body)
       assert_equal "foo@example.com", json["username"]
+      user = rails_identity_users(:one)
+      assert_equal old_password_digest, user.password_digest
+    end
+
+    test "update a user with a new password using old password" do
+      user = rails_identity_users(:one)
+      old_password_digest = user.password_digest
+      patch :update, id: 1, old_password: "password", password: "newpassword", password_confirmation: "newpassword" , token: @token
+      assert_response 200
+      user = User.find_by_uuid(user.uuid)
+      assert_not_equal old_password_digest, user.password_digest
+    end
+
+    test "cannot update password with a invalid token" do
+      patch :update, id: 1, old_password: "wrongpassword", password: "newpassword", password_confirmation: "newpassword" , token: @token
+      assert_response 401
     end
 
     test "update current user" do
@@ -145,6 +163,8 @@ module RailsIdentity
     end
 
     test "update password using reset token" do
+      user = rails_identity_users(:one)
+      old_password_digest = user.password_digest
       patch :update, id: 1, issue_reset_token: true, token: @token
       assert_response 200
       json = JSON.parse(@response.body)
@@ -154,6 +174,14 @@ module RailsIdentity
       # use reset token to update password
       patch :update, id: 1, password: "newsecret", password_confirmation: "newsecret", token: new_reset_token
       assert_response 200
+
+      user = User.find_by_uuid(user.uuid)
+      assert_not_equal old_password_digest, user.password_digest
+    end
+
+    test "cannot update password with non-reset token" do
+      patch :update, id: 1, password: "newsecret", password_confirmation: "newsecret", token: @token
+      assert_response 401
     end
 
     test "cannot update invalid email" do

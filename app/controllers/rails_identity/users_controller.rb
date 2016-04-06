@@ -49,15 +49,22 @@ module RailsIdentity
     # is set to true. It will not update :reset_token directly.
     #
     def update
-      if params[:issue_reset_token]
-        @user.issue_reset_token
-        # maybe send the token via email?
-      end
-
-      if @user.update_attributes(user_params)
-        render json: @user, except: [:password_digest]
+      # There are two possible ways. Using old password or reset token.
+      if params[:password] && params[:old_password] && !@user.authenticate(params[:old_password])
+        render_error 401, "Invalid old password"
+      elsif params[:password] && params[:old_password].nil? && @token != @user.reset_token
+        render_error 401, "Invalid reset token error"
       else
-        render_errors 400, @user.errors.full_messages
+        if params[:issue_reset_token]
+          @user.issue_reset_token
+          # maybe send the token via email?
+        end
+
+        if @user.update_attributes(user_params)
+          render json: @user, except: [:password_digest]
+        else
+          render_errors 400, @user.errors.full_messages
+        end
       end
     end
 

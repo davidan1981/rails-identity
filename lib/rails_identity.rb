@@ -15,6 +15,8 @@ module RailsIdentity
     class InvalidTokenError < StandardError; end
     class ObjectNotFoundError < StandardError; end
     class UnauthorizedError < StandardError; end
+    class InvalidOldPasswordError < StandardError; end
+    class InvalidResetTokenError < StandardError; end
   end
 
   # This module is a mixin that allows the model to use UUIDs instead of

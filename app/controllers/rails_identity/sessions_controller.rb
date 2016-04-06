@@ -42,7 +42,7 @@ module RailsIdentity
           # :nocov:
         end
       else
-          render_error 401, "Invalid username or password"
+        render_error 401, "Invalid username or password"
       end
     end
 
