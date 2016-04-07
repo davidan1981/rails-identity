@@ -9,11 +9,12 @@ module RailsIdentity
 
     # All except user creation requires a session token. Note that reset
     # token is also a legit session token, so :require_token will suffice.
-    prepend_before_action :require_token, except: [:index, :create, :options]
+    prepend_before_action :require_token, only: [:show, :destroy]
+    prepend_before_action :accept_token, only: [:update, :create]
     prepend_before_action :require_admin_token, only: [:index]
 
     # Some actions must have a user specified.
-    before_action :get_user, only: [:show, :update, :destroy]
+    before_action :get_user, only: [:show, :destroy]
 
     ##
     # List all users (but only works for admin user).
@@ -28,7 +29,6 @@ module RailsIdentity
     # is optional.
     #
     def create
-      require_token(suppress_error: true)
       @user = User.new(user_params)
       if @user.save
         render json: @user, except: [:password_digest], status: 201
@@ -45,26 +45,37 @@ module RailsIdentity
     end
 
     ##
-    # Patches the user. It updates :reset_token only if :issue_reset_token
-    # is set to true. It will not update :reset_token directly.
+    # Patches the user. Some overloading operations here. There are three
+    # notable ways to update a user.
+    #
+    #   - Issue a reset token
+    #     If params has :issue_reset_token set to true, the action will
+    #     issue a reset token for the user and returns 204. Yes, 204 No
+    #     Content. TODO: in the future, the action will trigger an email.
+    #   - Reset the password
+    #     Two ways to reset password:
+    #       - Provide the old password along with the new password and
+    #         confirmation.
+    #       - Provide the reset token as the auth token.
+    #   - Change other data
     #
     def update
-      # There are two possible ways. Using old password or reset token.
-      if params[:password] && params[:old_password] && !@user.authenticate(params[:old_password])
-        render_error 401, "Invalid old password"
-      elsif params[:password] && params[:old_password].nil? && @token != @user.reset_token
-        render_error 401, "Invalid reset token error"
+      if params[:issue_reset_token]
+        # For issuing a reset token, one does not need an auth token. so do
+        # not authorize the request.
+        get_user(check_authorization: false)
+        raise Errors::UnauthorizedError unless params[:username] == @user.username
+        update_reset_token()
       else
-        if params[:issue_reset_token]
-          @user.issue_reset_token
-          # maybe send the token via email?
+        get_user()
+        if params[:password]
+          if params[:old_password]
+            raise Errors::UnauthorizedError unless @user.authenticate(params[:old_password])
+          else
+            raise Errors::UnauthorizedError unless @token == @user.reset_token
+          end
         end
-
-        if @user.update_attributes(user_params)
-          render json: @user, except: [:password_digest]
-        else
-          render_errors 400, @user.errors.full_messages
-        end
+        update_user(user_params)
       end
     end
 
@@ -81,6 +92,22 @@ module RailsIdentity
       end
     end
 
+    protected
+
+      def update_user(update_user_params)
+        if @user.update_attributes(update_user_params)
+          render json: @user, except: [:password_digest, :reset_token]
+        else
+          render_errors 400, @user.errors.full_messages
+        end
+      end
+
+      def update_reset_token
+        @user.issue_reset_token()
+        @user.save
+        render body: '', status: 204
+      end
+
     private
 
       ##
@@ -88,10 +115,13 @@ module RailsIdentity
       # resource object of this users controller is user, the id is
       # specified in :id param.
       #
-      def get_user
+      def get_user(check_authorization: true)
         params[:id] = @auth_user.id if params[:id] == "current"
         @user = find_object(User, params[:id])
-        raise Errors::UnauthorizedError unless authorized?(@user)
+        if check_authorization && !authorized?(@user)
+          raise Errors::UnauthorizedError
+        end
+        return @user
       end
 
       def user_params

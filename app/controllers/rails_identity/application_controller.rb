@@ -110,7 +110,7 @@ module RailsIdentity
           raise "Session is not valid" if session.nil?
           JWT.decode token, session.secret, true
         rescue
-          if !suppress_error
+          unless suppress_error
             logger.warn("Invalid token")
             raise Errors::InvalidTokenError
           end
@@ -118,6 +118,10 @@ module RailsIdentity
         @token = token
         @auth_session = session
         @auth_user = auth_user
+      end
+
+      def accept_token()
+        require_token(suppress_error: true)
       end
 
       ##

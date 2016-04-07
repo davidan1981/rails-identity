@@ -108,18 +108,9 @@ To use a reset token, you must issue one first:
 
     $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIyMWQzNzFjNi1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTExLCJleHAiOjE0NjExMTcxMTF9.abPnKcB5-8cjbuuIp3q-vypPEvJoKXxV3lkLjPMxeLU issue_reset_token=true
 
-    HTTP/1.1 200 OK
-    {
-        "created_at": "2016-04-05T02:02:11.410Z",
-        "deleted_at": null,
-        "id": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
-        "metadata": null,
-        "reset_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg",
-        "role": 10,
-        "updated_at": "2016-04-06T01:52:34.085Z",
-        "username": "foo@example.com",
-        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a"
-    }
+    HTTP/1.1 204 No Content
+
+TODO: the token is emailed to the user's email.
 
 Note that the response includes a JWT token that looks similar to a normal
 session token. Well, it _is_ a session token but with a shorter life span (1
