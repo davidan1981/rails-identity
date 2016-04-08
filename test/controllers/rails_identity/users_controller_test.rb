@@ -150,7 +150,7 @@ module RailsIdentity
     end
 
     test "update (issue) a new reset token" do
-      patch :update, id: 1, issue_reset_token: true, username: @session.user.username
+      patch :update, id: "current", issue_reset_token: true, username: @session.user.username
       assert_response 204
       user = User.find_by_uuid(rails_identity_users(:one))
       new_reset_token = user.reset_token
@@ -161,10 +161,20 @@ module RailsIdentity
       assert_equal "foo@example.com", json["username"]
     end
 
+    test "cannot update (issue) a new reset token without username" do
+      patch :update, id: "current", issue_reset_token: true
+      assert_response 404
+    end
+
+    test "cannot update (issue) a new reset token with invalid username" do
+      patch :update, id: "current", issue_reset_token: true, username: "doesnotexist@example.com"
+      assert_response 404
+    end
+
     test "update password using reset token" do
       user = rails_identity_users(:one)
       old_password_digest = user.password_digest
-      patch :update, id: 1, issue_reset_token: true, username: @session.user.username
+      patch :update, id: "current", issue_reset_token: true, username: @session.user.username
       user = User.find_by_uuid(user.uuid)
       new_reset_token = user.reset_token
       assert_not_nil new_reset_token

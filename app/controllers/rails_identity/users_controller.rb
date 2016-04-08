@@ -63,7 +63,8 @@ module RailsIdentity
       if params[:issue_reset_token]
         # For issuing a reset token, one does not need an auth token. so do
         # not authorize the request.
-        get_user(check_authorization: false)
+        raise Errors::UnauthorizedError unless params[:id] == "current"
+        get_user_for_reset_token()
         raise Errors::UnauthorizedError unless params[:username] == @user.username
         update_reset_token()
       else
@@ -94,6 +95,9 @@ module RailsIdentity
 
     protected
 
+      ## 
+      # This method normally updates the user using permitted params.
+      #
       def update_user(update_user_params)
         if @user.update_attributes(update_user_params)
           render json: @user, except: [:password_digest, :reset_token]
@@ -102,10 +106,15 @@ module RailsIdentity
         end
       end
 
+      ##
+      # This method updates user with a new reset token. Only used for this
+      # operation.
+      #
       def update_reset_token
         @user.issue_reset_token()
         @user.save
         render body: '', status: 204
+        UserMailer.password_reset(@user).deliver_later
       end
 
     private
@@ -115,12 +124,19 @@ module RailsIdentity
       # resource object of this users controller is user, the id is
       # specified in :id param.
       #
-      def get_user(check_authorization: true)
+      def get_user
         params[:id] = @auth_user.id if params[:id] == "current"
         @user = find_object(User, params[:id])
-        if check_authorization && !authorized?(@user)
-          raise Errors::UnauthorizedError
-        end
+        raise Errors::UnauthorizedError unless authorized?(@user)
+        return @user
+      end
+
+      ##
+      # For issuing a new reset token, use this method to get user.
+      #
+      def get_user_for_reset_token
+        @user = User.find_by_username(params[:username])
+        raise Errors::ObjectNotFoundError if @user.nil?
         return @user
       end
 

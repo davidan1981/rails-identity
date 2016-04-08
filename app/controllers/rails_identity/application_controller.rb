@@ -22,16 +22,6 @@ module RailsIdentity
     rescue_from Errors::UnauthorizedError, with: :unauthorized_error
 
     ##
-    # Renders 401 due to an invalid token.
-    #
-    def invalid_token_error; render_error 401, "Invalid token" end
-
-    ##
-    # Renders 401 due to a unauthorized request.
-    #
-    def unauthorized_error; render_error 401, "Unauthorized request" end
-
-    ##
     # Renders a generic OPTIONS response. The actual controller must
     # override this action if desired to have specific OPTIONS handling
     # logic.
@@ -45,6 +35,16 @@ module RailsIdentity
     end
 
     protected
+
+      ##
+      # Renders 401 due to an invalid token.
+      #
+      def invalid_token_error; render_error 401, "Invalid token" end
+
+      ##
+      # Renders 401 due to a unauthorized request.
+      #
+      def unauthorized_error; render_error 401, "Unauthorized request" end
 
       ##
       # Helper method to get the user object in the request context. There

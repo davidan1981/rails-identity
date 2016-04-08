@@ -2,6 +2,9 @@ require "rails_identity/engine"
 
 module RailsIdentity
 
+  # App MUST monkey patch this constant
+  MAILER_EMAIL = "no-reply@rails-identity.com"
+
   # Fixed set of roles.
   module Roles
     PUBLIC = 0
