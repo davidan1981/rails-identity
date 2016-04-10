@@ -26,7 +26,7 @@ module RailsIdentity
     end
 
     test "user can list all his sessions using user id in routing" do
-      get :index, user_id: @session.user.id, token: @token
+      get :index, user_id: @session.user.uuid, token: @token
       assert_response :success
       sessions = assigns(:sessions)
       assert_not_nil sessions
@@ -35,6 +35,12 @@ module RailsIdentity
       sessions.each do |session|
         assert session.user == @session.user
       end
+    end
+
+    test "user cannot list expired session" do
+      session = Session.new(user: @session.user, seconds: -1)
+      get :index, user_id: session.user.uuid, token: @token
+      assert_response :success
     end
 
     test "user cannot list other's sessions" do

@@ -110,7 +110,9 @@ To use a reset token, you must issue one first:
 
     HTTP/1.1 204 No Content
 
-User UUID and token are sent to the user via email.
+User UUID and token are sent to the user via email. In real life, the email
+would include a link to a page where it will make a PATCH request to
+`/users/<user_uuid>?token=<reset_token>`.
 
 Note that the response includes a JWT token that looks similar to a normal
 session token. Well, it _is_ a session token but with a shorter life span (1

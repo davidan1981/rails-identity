@@ -28,5 +28,18 @@ module RailsIdentity
       self.token = JWT.encode(payload, self.secret, 'HS256')
     end
 
+    ##
+    # Determines if the session has expired or not.
+    #
+    def expired?
+      now = Time.now.to_i
+      begin
+        decoded = JWT.decode self.token, nil, false
+      rescue JWT::ExpiredSignature
+        return true
+      end
+      return false
+    end
+
   end
 end

@@ -16,10 +16,9 @@ module RailsIdentity
     ##
     # Lists all sessions that belong to the specified or authenticated user. 
     #
-    # TODO: dynamically delete expired sessions.
-    #
     def index
       @sessions = Session.where(user: @user)
+      @sessions.select {|session| !session.expired?}
       render json: @sessions, except: [:secret]
     end
 
