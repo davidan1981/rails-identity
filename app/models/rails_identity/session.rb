@@ -32,7 +32,6 @@ module RailsIdentity
     # Determines if the session has expired or not.
     #
     def expired?
-      now = Time.now.to_i
       begin
         decoded = JWT.decode self.token, nil, false
       rescue JWT::ExpiredSignature

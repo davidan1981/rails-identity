@@ -18,8 +18,17 @@ module RailsIdentity
     #
     def index
       @sessions = Session.where(user: @user)
-      @sessions.select {|session| !session.expired?}
-      render json: @sessions, except: [:secret]
+      expired = []
+      active = []
+      @sessions.each do |session|
+        if session.expired?
+          expired << session.uuid
+        else
+          active << session
+        end
+      end
+      SessionsCleanupJob.perform_later(*expired)
+      render json: active, except: [:secret]
     end
 
     ##
@@ -71,7 +80,7 @@ module RailsIdentity
       # Get the specified or current session.
       # 
       # An Errors::ObjectNotFoundError is raised if the session does not
-      # exist.
+      # exist (or deleted due to expiration).
       #
       # An Errors::UnauthorizedError is raised if the authenticated user
       # does not have authorization for the specified session.
@@ -82,7 +91,12 @@ module RailsIdentity
           session_id = @auth_session.id
         end
         @session = find_object(Session, session_id)
-        raise Errors::UnauthorizedError unless authorized?(@session)
+        if !authorized?(@session)
+          raise Errors::UnauthorizedError
+        elsif @session.expired?
+          @session.destroy
+          raise Errors::ObjectNotFoundError
+        end
       end
 
       def session_params

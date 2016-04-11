@@ -39,8 +39,11 @@ module RailsIdentity
 
     test "user cannot list expired session" do
       session = Session.new(user: @session.user, seconds: -1)
+      session.save()
       get :index, user_id: session.user.uuid, token: @token
       assert_response :success
+      json = JSON.parse(@response.body)
+      assert_equal 1, json.length
     end
 
     test "user cannot list other's sessions" do
@@ -114,6 +117,13 @@ module RailsIdentity
     test "cannot show other's session" do
       get :show, id: 2, token: @token
       assert_response 401
+    end
+
+    test "cannot show expired session" do
+      session = Session.new(user: @session.user, seconds: -1)
+      session.save()
+      get :show, id: session.uuid, token: @token
+      assert_response 404
     end
 
     test "public cannot show session" do
