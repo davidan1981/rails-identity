@@ -97,9 +97,9 @@ This request will send an email verification token to the user's email.
 The app should craft the linked page to use the verification token to
 start a session and set `verified` to true by the following:
 
-    http PATCH localhost:3000/users token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0 verified=true
+    http PATCH localhost:3000/users/current token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0 verified=true
     
-Note that if user's `verified` is `false`, some endpoints will 
+Note that `current` can be used when UUID is unknown but the token is specified.  Also note that, if user's `verified` is `false`, some endpoints will 
 reject the request.
 
 ### Create Session
@@ -154,7 +154,7 @@ Note that the response includes a JWT token that looks similar to a normal
 session token. Well a surprise! It _is_ a session token but with a shorter life span (1
 hour). So use it instead on the password reset request:
 
-    http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
+    http PATCH localhost:3000/users/current token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
 
     HTTP/1.1 200 OK
     {
