@@ -135,7 +135,10 @@ module RailsIdentity
       # specified in :id param.
       #
       def get_user
-        params[:id] = @auth_user.id if params[:id] == "current"
+        if params[:id] == "current"
+          raise Errors::UnauthorizedError if @auth_user.nil?
+          params[:id] = @auth_user.uuid
+        end
         @user = find_object(User, params[:id])
         raise Errors::UnauthorizedError unless authorized?(@user)
         return @user
