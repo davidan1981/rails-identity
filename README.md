@@ -12,10 +12,10 @@ cookies or non-unique IDs involved in this project.
 This documentation uses [httpie](https://github.zom/) to demonstrate making
 HTTP requests from command line.
 
-## Adding `rails-identity` to Your App
+## Install
 
-Since rails-identity is still in development, clone the repo. Then, include
-it in your app's `Gemfile`:
+Note that rails-identity is still in early development, so clone the repo.
+Go to your app's directory and add this line to your `Gemfile`:
 
     gem 'rails-identity', path: '/path/to/rails-identity/local/repo'
 
@@ -36,14 +36,42 @@ Then, run `bundle install` and do `rake routes` to verify the routes.
 
 Next, install migrations from rails-identity and perform migrations:
 
-    rake rails-identity:migrate:install
-    rake db:migrate RAILS_ENV=development
+    $ bundle exec rake rails_identity:install:migrations
+    $ bundle exec rake db:migrate RAILS_ENV=development
+
+FYI, to see all `rake` tasks, do the following:
+
+    $ bundle exec rake --tasks
+
+### Other Plugins
+
+rails-identity uses ActiveJob to perform tasks asynchronously, which
+requires a back-end module. For example, you can use
+[DelayedJob](https://github.com/collectiveidea/delayed_job) by adding the
+following in Gemfile.
+
+    gem 'delayed_job_active_record'
+    gem 'daemons'
+    
+Also, email service must be specified in your app for sending out
+email verification token and password reset token. Note that the 
+default email template is not sufficient for real use. 
+You must define your own mailer action views to cater emails for 
+your need.
+
+### Running Your App
 
 Now you're ready. Run the server to test:
 
-    rails server
+    $ bundle exec rails server
 
-## Create User
+To allow DelayedJob tasks to run, do
+
+    $ RAILS_ENV=development bin/delayed_job start
+
+## Usage
+
+### Create User
 
 Make a POST request on `/users` with `email`, `password`, and
 `password_confirmation` in the JSON payload.
@@ -58,14 +86,23 @@ The response should be 201 if successful.
         "deleted_at": null,
         "id": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
         "metadata": null,
-        "reset_token": null,
         "role": 10,
         "updated_at": "2016-04-05T02:02:11.410Z",
         "username": "foo@example.com",
-        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a"
+        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
+        "verified": false
     }
+    
+This request will send an email verification token to the user's email.
+The app should craft the linked page to use the verification token to
+start a session and set `verified` to true by the following:
 
-## Create Session
+    http PATCH localhost:3000/users token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0 verified=true
+    
+Note that if user's `verified` is `false`, some endpoints will 
+reject the request.
+
+### Create Session
 
 A proper way to create a session is to use username and password:
 
@@ -82,27 +119,26 @@ A proper way to create a session is to use username and password:
         "uuid": "b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a"
     }
 
-This is the login process.
+Notice this is essentially a login process for single-page apps.
 
-## Delete Session
+### Delete Session
 
 A session can be deleted via a DELETE method. This is essentially a logout
 process.
 
-    $ http DELETE localhost:3000/session/b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
+    $ http DELETE localhost:3000/session/b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
 
     HTTP/1.1 204 No Content
 
-NOTE: If you prefer not to use a token as a query parameter (due to a
-security concern), feel free to use it in a JSON payload.
+NOTE: If you prefer, you may use `token` in the query parameter instead of a JSON property. This, however, may be a security concern as most browsers' history includes query paramters.
 
-## Password Reset
+### Password Reset
 
 Since rails-identity is a RESTful service itself, password reset is done via
 a PATCH method on the user resource. But you must specify either the old
 password or a reset token. To use the old password:
 
-    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ old_password="supersecret" password="reallysecret" password_confirmation="reallysecret"
+    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ old_password="supersecret" password="reallysecret" password_confirmation="reallysecret"
 
 To use a reset token, you must issue one first:
 
@@ -110,15 +146,15 @@ To use a reset token, you must issue one first:
 
     HTTP/1.1 204 No Content
 
-User UUID and token are sent to the user via email. In real life, the email
-would include a link to a page where it will make a PATCH request to
-`/users/<user_uuid>?token=<reset_token>`.
+User token will be sent to the user's email. In a real application, the email
+would include a link to a _page_ with JavaScript code automatically making a
+PATCH request to `/users/current?token=<reset_token>`.
 
 Note that the response includes a JWT token that looks similar to a normal
-session token. Well, it _is_ a session token but with a shorter life span (1
+session token. Well a surprise! It _is_ a session token but with a shorter life span (1
 hour). So use it instead on the password reset request:
 
-    http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
+    http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
 
     HTTP/1.1 200 OK
     {
@@ -130,11 +166,15 @@ hour). So use it instead on the password reset request:
         "role": 10,
         "updated_at": "2016-04-06T01:55:45.163Z",
         "username": "foo@example.com",
-        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a"
+        "uuid": "68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a",
+        "verification_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0",
+        "verified": true
     }
 
+The token used with the request _must_ match the reset token previously 
+issued for the user.
 
-## How to Authorize Request
+### How to Authorize Request
 
 rails-identity is designed to be used in your app to authorize requests as
 well.

@@ -31,7 +31,8 @@ module RailsIdentity
     def create
       @user = User.new(user_params)
       if @user.save
-        render json: @user, except: [:password_digest], status: 201
+        render json: @user, except: [:verification_token, :reset_token, :password_digest], status: 201
+        UserMailer.email_verification(@user).deliver_later
       else
         render_errors 400, @user.errors.full_messages
       end
@@ -45,7 +46,7 @@ module RailsIdentity
     end
 
     ##
-    # Patches the user. Some overloading operations here. There are three
+    # Patches the user. Some overloading operations here. There are five
     # notable ways to update a user.
     #
     #   - Issue a reset token
@@ -57,16 +58,21 @@ module RailsIdentity
     #       - Provide the old password along with the new password and
     #         confirmation.
     #       - Provide the reset token as the auth token.
+    #   - Issue a verification token
     #   - Change other data
     #
     def update
-      if params[:issue_reset_token]
+      if params[:issue_reset_token] || params[:issue_verification_token]
         # For issuing a reset token, one does not need an auth token. so do
         # not authorize the request.
         raise Errors::UnauthorizedError unless params[:id] == "current"
-        get_user_for_reset_token()
+        get_user_for_token()
         raise Errors::UnauthorizedError unless params[:username] == @user.username
-        update_reset_token()
+        if params[:issue_reset_token]
+          update_token(:reset_token)
+        else
+          update_token(:verification_token)
+        end
       else
         get_user()
         if params[:password]
@@ -100,7 +106,7 @@ module RailsIdentity
       #
       def update_user(update_user_params)
         if @user.update_attributes(update_user_params)
-          render json: @user, except: [:password_digest, :reset_token]
+          render json: @user, except: [:password_digest]
         else
           render_errors 400, @user.errors.full_messages
         end
@@ -110,11 +116,15 @@ module RailsIdentity
       # This method updates user with a new reset token. Only used for this
       # operation.
       #
-      def update_reset_token
-        @user.issue_reset_token()
+      def update_token(kind)
+        @user.issue_token(kind)
         @user.save
+        if kind == :reset_token
+          UserMailer.password_reset(@user).deliver_later
+        else
+          UserMailer.email_verification(@user).deliver_later
+        end
         render body: '', status: 204
-        UserMailer.password_reset(@user).deliver_later
       end
 
     private
@@ -132,9 +142,10 @@ module RailsIdentity
       end
 
       ##
-      # For issuing a new reset token, use this method to get user.
+      # For issuing a new reset or for re-issuing a verification token, use
+      # this method to get user.
       #
-      def get_user_for_reset_token
+      def get_user_for_token
         @user = User.find_by_username(params[:username])
         raise Errors::ObjectNotFoundError if @user.nil?
         return @user
@@ -144,9 +155,9 @@ module RailsIdentity
         # Only ADMIN can assign the attribute role. The attribute value will
         # be ignored if the user is not an ADMIN.
         if @auth_user.try(:role).try(:>=, Roles::ADMIN)
-          params.permit(:username, :password, :password_confirmation, :role)
+          params.permit(:username, :password, :password_confirmation, :role, :verified)
         else
-          params.permit(:username, :password, :password_confirmation)
+          params.permit(:username, :password, :password_confirmation, :verified)
         end
       end 
 

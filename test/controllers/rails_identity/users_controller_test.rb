@@ -192,6 +192,30 @@ module RailsIdentity
       assert_response 401
     end
 
+    test "update (reissue) a verification token" do
+      user = User.find_by_uuid(rails_identity_users(:one))
+      old_verification_token = user.verification_token
+      patch :update, id: "current", issue_verification_token: true, username: @session.user.username
+      assert_response 204
+      user = User.find_by_uuid(rails_identity_users(:one))
+      new_verification_token = user.verification_token
+      assert_not_equal old_verification_token, new_verification_token
+      patch :update, id: "current", verified: true, token: new_verification_token
+      assert_response 200
+      json = JSON.parse(@response.body)
+      assert_equal true, json["verified"]
+    end
+
+    test "cannot update (reissue) a verification reset token without username" do
+      patch :update, id: "current", issue_verification_token: true
+      assert_response 404
+    end
+
+    test "cannot update (reissue) a verification token with invalid username" do
+      patch :update, id: "current", issue_verification_token: true, username: "doesnotexist@example.com"
+      assert_response 404
+    end
+
     test "cannot update invalid email" do
       patch :update, id: 1, username: 'foobar', token: @token
       assert_response 400

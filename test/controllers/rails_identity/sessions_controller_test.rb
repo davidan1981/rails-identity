@@ -67,6 +67,14 @@ module RailsIdentity
       assert !json.has_key?("secret")
     end 
 
+    test "cannot create a session if not verified" do
+      user = rails_identity_users(:one)
+      user.verified = false
+      user.save()
+      post :create, username: user.username, password: "password"
+      assert_response 401
+    end 
+
     test "cannot create a session with non-existent username" do
       post :create, username: 'idontexist', password: "secret"
       assert_response 401

@@ -9,13 +9,16 @@ one:
   username: one@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
   role: <%= RailsIdentity::Roles::USER %>
+  verified: true
 two:
   uuid: "2"
   username: two@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
   role: <%= RailsIdentity::Roles::USER %>
+  verified: true
 admin_one:
   uuid: "admin_one"
   username: admin_one@example.com
   password_digest: <%= BCrypt::Password.create("password") %>
   role: <%= RailsIdentity::Roles::ADMIN %>
+  verified: true

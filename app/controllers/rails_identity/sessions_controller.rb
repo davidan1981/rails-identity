@@ -41,6 +41,7 @@ module RailsIdentity
     def create
       @user = User.find_by_username(session_params[:username])
       if (@user && @user.authenticate(session_params[:password])) || get_user()
+        raise Errors::UnauthorizedError unless @user.verified
         @session = Session.new(user: @user)
         if @session.save
           render json: @session, except: [:secret], status: 201

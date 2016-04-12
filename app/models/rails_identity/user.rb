@@ -13,6 +13,18 @@ module RailsIdentity
     alias_attribute :email, :username
 
     ##
+    # Initializes the user. User is not verified initially. The user has one
+    # hour to get verified. After that, a PATCH request must be made to
+    # re-issue the verification token.
+    #
+    def initialize(attributes = {})
+      super
+      session = Session.new(user: self, seconds: 3600)
+      self.verification_token = session.token
+      self.verified = false
+    end
+
+    ##
     # Sets the default the role for the user if not set.
     #
     def default_role
@@ -22,10 +34,14 @@ module RailsIdentity
     ##
     # This method will generate a reset token that lasts for an hour.
     #
-    def issue_reset_token
+    def issue_token(kind)
       session = Session.new(user: self, seconds: 3600)
       session.save
-      self.reset_token = session.token
+      if kind == :reset_token
+        self.reset_token = session.token
+      elsif kind == :verification_token
+        self.verification_token = session.token
+      end
     end
 
   end
