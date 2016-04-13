@@ -8,8 +8,10 @@ module RailsIdentity
 
     # This is a catch-all.
     rescue_from StandardError do |exception|
+      # :nocov:
       logger.error exception.message
       render_error 500, "Unknown error occurred: #{exception.message}"
+      # :nocov:
     end
 
     # Most actions require a session token. If token is invalid, rescue the
