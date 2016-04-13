@@ -33,7 +33,7 @@ module RailsIdentity
     #
     def expired?
       begin
-        decoded = JWT.decode self.token, nil, false
+        JWT.decode self.token, nil, false
       rescue JWT::ExpiredSignature
         return true
       end

@@ -6,20 +6,33 @@ module RailsIdentity
   class ApplicationController < ActionController::Base
     include ApplicationHelper
 
+    # This is a catch-all.
+    rescue_from StandardError do |exception|
+      logger.error exception.message
+      render_error 500, "Unknown error occurred: #{exception.message}"
+    end
+
     # Most actions require a session token. If token is invalid, rescue the
     # exception and throw an HTTP 401 response.
-    rescue_from Errors::InvalidTokenError, with: :invalid_token_error
+    rescue_from Errors::InvalidTokenError do |exception|
+      logger.error exception.message
+      render_error 401, "Invalid token"
+    end
 
     # Some actions require a resource object via id. If no such object
     # exists, throw an HTTP 404 response.
     rescue_from Errors::ObjectNotFoundError do |exception|
+      logger.error exception.message
       render_error 404, exception.message
     end
 
     # The request is authenticated but not authorized for the specified
     # action. Throw an HTTP 401 response.
     #
-    rescue_from Errors::UnauthorizedError, with: :unauthorized_error
+    rescue_from Errors::UnauthorizedError do |exception|
+      logger.error exception.message
+      render_error 401, "Unauthorized request"
+    end
 
     ##
     # Renders a generic OPTIONS response. The actual controller must
@@ -37,16 +50,6 @@ module RailsIdentity
     protected
 
       ##
-      # Renders 401 due to an invalid token.
-      #
-      def invalid_token_error; render_error 401, "Invalid token" end
-
-      ##
-      # Renders 401 due to a unauthorized request.
-      #
-      def unauthorized_error; render_error 401, "Unauthorized request" end
-
-      ##
       # Helper method to get the user object in the request context. There
       # are two ways to specify the user id--one in the routing or the auth
       # context. Only admin can actually specify the user id in the routing.
@@ -59,14 +62,17 @@ module RailsIdentity
       # 
       def get_user(fallback: true)
         user_id = params[:user_id]
+        logger.debug("Attempting to get user #{user_id}")
         if !user_id.nil? && user_id != "current"
           @user = find_object(User, params[:user_id])  # will throw error if nil
-          raise Errors::UnauthorizedError unless authorized?(@user)
+          unless authorized?(@user)
+            raise Errors::UnauthorizedError, "Not authorized to access user #{user_id}"
+          end
         elsif fallback || user_id == "current"
           @user = @auth_user
         else
           # :nocov:
-          raise Errors::ObjectNotFoundError
+          raise Errors::ObjectNotFoundError, "User #{user_id} does not exist"
           # :nocov:
         end
       end
@@ -79,6 +85,7 @@ module RailsIdentity
       # the object could not be found using the uuid.
       #
       def find_object(model, uuid, error: Errors::ObjectNotFoundError)
+        logger.debug("Attempting to get #{model.name} #{uuid}")
         obj = model.find_by_uuid(uuid)
         if obj.nil? && !error.nil?
           raise error, "#{model.name} #{uuid} cannot be found" 
@@ -87,15 +94,13 @@ module RailsIdentity
       end
 
       ##
-      # Requires a session for an action. Token must be specified in query
+      # Attempt to get a token for the session. Token must be specified in query
       # string or part of the JSON object.
       #
       # A Errors::InvalidTokenError is raised if the JWT is malformed or not
       # valid against its secret.
       #
-      # TODO: Raise discrete error for various error cases.
-      #
-      def require_token(required_role: Roles::PUBLIC, suppress_error: false)
+      def get_token(required_role: Roles::PUBLIC, suppress_error: false)
         begin 
           token = params[:token]
           decoded = JWT.decode token, nil, false
@@ -110,9 +115,10 @@ module RailsIdentity
           raise "Session is not valid" if session.nil?
           JWT.decode token, session.secret, true
         rescue
-          unless suppress_error
-            logger.warn("Invalid token")
-            raise Errors::InvalidTokenError
+          if suppress_error
+            logger.info("Invalid token but error is suppressed")
+          else
+            raise Errors::InvalidTokenError, "Invalid token: #{token}"
           end
         end
         @token = token
@@ -120,8 +126,20 @@ module RailsIdentity
         @auth_user = auth_user
       end
 
+      ## 
+      # Requires a token.
+      #
+      def require_token
+        logger.debug("Requires a token")
+        get_token
+      end
+
+      ##
+      # Accepts a token if present. If not, it's still ok.
+      #
       def accept_token()
-        require_token(suppress_error: true)
+        logger.debug("Accepts a token")
+        get_token(suppress_error: true)
       end
 
       ##
@@ -129,13 +147,15 @@ module RailsIdentity
       # issued for an admin user (role == 1000).
       #
       def require_admin_token
-        require_token(required_role: Roles::ADMIN)
+        logger.debug("Requires an admin token")
+        get_token(required_role: Roles::ADMIN)
       end
 
       ##
       # Determines if the user is authorized for the object.
       #
       def authorized?(obj)
+        logger.debug("Checking to see if authorized to access object")
         if !@auth_user
           # :nocov:
           return false

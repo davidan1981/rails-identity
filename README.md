@@ -99,8 +99,9 @@ start a session and set `verified` to true by the following:
 
     http PATCH localhost:3000/users/current token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0 verified=true
     
-Note that `current` can be used when UUID is unknown but the token is specified.  Also note that, if user's `verified` is `false`, some endpoints will 
-reject the request.
+Note that `current` can be used when UUID is unknown but the token is
+specified.  Also note that, if user's `verified` is `false`, some endpoints
+will reject the request.
 
 ### Create Session
 
@@ -130,7 +131,9 @@ process.
 
     HTTP/1.1 204 No Content
 
-NOTE: If you prefer, you may use `token` in the query parameter instead of a JSON property. This, however, may be a security concern as most browsers' history includes query paramters.
+NOTE: If you prefer, you may use `token` in the query parameter instead of a
+JSON property. This, however, may be a security concern as most browsers'
+history includes query paramters.
 
 ### Password Reset
 
@@ -174,7 +177,10 @@ hour). So use it instead on the password reset request:
 The token used with the request _must_ match the reset token previously 
 issued for the user.
 
-### How to Authorize Request
+### How to Authorize Requests
 
 rails-identity is designed to be used in your app to authorize requests as
-well.
+well. Use `RailsIdentity::ApplicationController.require_token` as a
+`before_action` callback. Alternatively, you may use `accept_token` or
+`require_admin_token` to optionally allow a token or require an admin token,
+respectively.
