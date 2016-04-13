@@ -12,6 +12,13 @@ cookies or non-unique IDs involved in this project.
 This documentation uses [httpie](https://github.zom/) to demonstrate making
 HTTP requests from command line.
 
+## Features
+
+* RESTful API
+* JWT-based session management
+* Email verification token
+* Password reset token
+
 ## Install
 
 Note that rails-identity is still in early development, so clone the repo.
