@@ -14,10 +14,12 @@ HTTP requests from command line.
 
 ## Features
 
+* Mountable Rails engine
 * RESTful API
 * JWT-based session management
 * Email verification token
 * Password reset token
+* Authorization cache for performance
 
 ## Install
 
