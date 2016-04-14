@@ -8,4 +8,5 @@ env:
   - DB=sqlite
 script:
   - RAILS_ENV=test bundle exec rake db:migrate --trace
+  - mkdir -p test/dummpy/tmp/cache
   - bundle exec rake test
