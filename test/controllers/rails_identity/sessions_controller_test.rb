@@ -3,6 +3,7 @@ require 'test_helper'
 module RailsIdentity
   class SessionsControllerTest < ActionController::TestCase
     setup do
+      Rails.cache.clear
       @routes = Engine.routes
       @session = rails_identity_sessions(:one)
       @token = @session.token
@@ -113,6 +114,10 @@ module RailsIdentity
       assert_response 200
       json = JSON.parse(@response.body)
       assert_equal @token, json["token"]
+      # Do a quick cache check
+      session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{json["uuid"]}")
+      assert_not_nil session
+      assert_equal @token, session.token
     end
 
     test "show a current session" do

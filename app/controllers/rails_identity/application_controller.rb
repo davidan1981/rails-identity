@@ -103,29 +103,42 @@ module RailsIdentity
       # valid against its secret.
       #
       def get_token(required_role: Roles::PUBLIC, suppress_error: false)
-        begin 
-          token = params[:token]
+        token = params[:token]
+
+        begin
           decoded = JWT.decode token, nil, false
-          raise "Could not decode" unless decoded
+
+          # At this point, we know that the token is not expired and
+          # well formatted. Find out the session ID to look up in the cache.
           payload = decoded[0]
-          user_uuid = payload['user_uuid']
-          logger.debug("Valid token for #{user_uuid}")
-          auth_user = User.find_by_uuid(payload["user_uuid"])
-          raise "User is not valid" if auth_user.nil?
-          raise "User has insufficient role" if auth_user.role < required_role
-          session = Session.find_by_uuid(payload["session_uuid"])
-          raise "Session is not valid" if session.nil?
-          JWT.decode token, session.secret, true
+          user_uuid = payload["user_uuid"]
+          session_uuid = payload["session_uuid"]
+          logger.debug("Token well formatted for user #{user_uuid}, session #{session_uuid}")
+
+          # Look up the cache. If present, use it and skip the verification.
+          @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{session_uuid}")
+          if @auth_session.nil?
+            logger.debug("Cache miss. Try database.")
+            auth_user = User.find_by_uuid(user_uuid)
+            if auth_user.nil? || auth_user.role < required_role
+              raise "Not valid user"
+            end
+            @auth_session = Session.find_by_uuid(session_uuid)
+            raise "Not valid session" if @auth_session.nil?
+            JWT.decode token, @auth_session.secret, true
+            logger.debug("Token well formatted and verified. Set cache.")
+            Rails.cache.write("#{CACHE_PREFIX}-session-#{session_uuid}", @auth_session)
+          end
         rescue
           if suppress_error
-            logger.info("Invalid token but error is suppressed")
+            logger.info("Invalid token but suppressing error")
           else
             raise Errors::InvalidTokenError, "Invalid token: #{token}"
           end
+        else
+          @auth_user = @auth_session.user
+          @token = @auth_session.token
         end
-        @token = token
-        @auth_session = session
-        @auth_user = auth_user
       end
 
       ## 

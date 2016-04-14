@@ -5,6 +5,7 @@ module RailsIdentity
   class UsersControllerTest < ActionController::TestCase
 
     setup do
+      Rails.cache.clear
       @routes = Engine.routes
       @session = rails_identity_sessions(:one)
       @token = @session.token
