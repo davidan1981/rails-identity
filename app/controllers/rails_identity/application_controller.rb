@@ -102,43 +102,52 @@ module RailsIdentity
       # A Errors::InvalidTokenError is raised if the JWT is malformed or not
       # valid against its secret.
       #
-      def get_token(required_role: Roles::PUBLIC, suppress_error: false)
+      def get_token(required_role: Roles::PUBLIC)
         token = params[:token]
 
+        # Attempt to decode token w/o secret first to see if well-formed and
+        # not expired.
         begin
           decoded = JWT.decode token, nil, false
-
-          # At this point, we know that the token is not expired and
-          # well formatted. Find out the session ID to look up in the cache.
-          payload = decoded[0]
-          user_uuid = payload["user_uuid"]
-          session_uuid = payload["session_uuid"]
-          logger.debug("Token well formatted for user #{user_uuid}, session #{session_uuid}")
-
-          # Look up the cache. If present, use it and skip the verification.
-          @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{session_uuid}")
-          if @auth_session.nil?
-            logger.debug("Cache miss. Try database.")
-            auth_user = User.find_by_uuid(user_uuid)
-            if auth_user.nil? || auth_user.role < required_role
-              raise "Not valid user"
-            end
-            @auth_session = Session.find_by_uuid(session_uuid)
-            raise "Not valid session" if @auth_session.nil?
-            JWT.decode token, @auth_session.secret, true
-            logger.debug("Token well formatted and verified. Set cache.")
-            Rails.cache.write("#{CACHE_PREFIX}-session-#{session_uuid}", @auth_session)
-          end
-        rescue
-          if suppress_error
-            logger.info("Invalid token but suppressing error")
-          else
-            raise Errors::InvalidTokenError, "Invalid token: #{token}"
-          end
-        else
-          @auth_user = @auth_session.user
-          @token = @auth_session.token
+        rescue JWT::DecodeError => e
+          logger.error("Token decode error: #{e.message}")
+          raise Errors::InvalidTokenError, "Invalid token: #{token}"
         end
+
+        # At this point, we know that the token is not expired and
+        # well formatted. Find out if the payload is well defined.
+        payload = decoded[0]
+        if payload.nil?
+          logger.error("Token payload is nil: #{token}")
+          raise Errors::InvalidTokenError, "Invalid token payload: #{token}"
+        end
+
+        user_uuid = payload["user_uuid"]
+        session_uuid = payload["session_uuid"]
+        if user_uuid.nil? || session_uuid.nil?
+          logger.error("User UUID or session UUID is nil")
+          raise Errors::InvalidTokenError, "Invalid token payload content: #{token}"
+        end
+        logger.debug("Token well formatted for user #{user_uuid}, session #{session_uuid}")
+
+        # Look up the cache. If present, use it and skip the verification.
+        @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{session_uuid}")
+        if @auth_session.nil?
+          logger.debug("Cache miss. Try database.")
+          auth_user = User.find_by_uuid(user_uuid)
+          if auth_user.nil? || auth_user.role < required_role
+            raise Errors::InvalidTokenError, "Well-formed but invalid user token: #{token}"
+          end
+          @auth_session = Session.find_by_uuid(session_uuid)
+          if @auth_session.nil?
+            raise Errors::InvalidTokenError, "Well-formed but invalid session token: #{token}"
+          end
+          JWT.decode token, @auth_session.secret, true
+          logger.debug("Token well formatted and verified. Set cache.")
+          Rails.cache.write("#{CACHE_PREFIX}-session-#{session_uuid}", @auth_session)
+        end
+        @auth_user = @auth_session.user
+        @token = @auth_session.token
       end
 
       ## 
@@ -154,7 +163,11 @@ module RailsIdentity
       #
       def accept_token()
         logger.debug("Accepts a token")
-        get_token(suppress_error: true)
+        begin
+          get_token()
+        rescue StandardError => e
+          logger.error("Suppressing error: #{e.message}")
+        end
       end
 
       ##
