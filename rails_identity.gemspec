@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = RailsIdentity::VERSION
   s.authors     = ["David An"]
   s.email       = ["davidan1981@gmail.com"]
-  s.homepage    = "https://github.com/davidan42/rails_identity"
+  s.homepage    = "https://github.com/davidan1981/rails_identity"
   s.summary     = "rails-identity is a Rails engine that provides a simple JWT-based session management service."
   s.description = "See README.md"
   s.license     = "MIT"
@@ -22,8 +22,6 @@ Gem::Specification.new do |s|
   s.add_dependency "uuidtools", "~> 2.1.5"
   s.add_dependency "jwt", "~> 1.5.4"
   s.add_dependency "paranoia", "~> 2.0"
-  s.add_dependency "simplecov"
-  s.add_dependency "coveralls"
 
   s.add_development_dependency "sqlite3"
 end
