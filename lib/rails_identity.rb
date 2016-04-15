@@ -5,8 +5,9 @@ module RailsIdentity
   # App MUST monkey patch this constant
   MAILER_EMAIL = "no-reply@rails-identity.com"
 
-  # To be able to break cache when backwards compatibility breaks
-  CACHE_PREFIX = "rails-identity-#{RailsIdentity::VERSION}"
+  # To be able to break cache when backwards compatibility breaks. Update it
+  # only when compatibility breaks
+  CACHE_PREFIX = "rails-identity-0.0.2"
 
   # Fixed set of roles.
   module Roles
