@@ -11,7 +11,12 @@ Gem::Specification.new do |s|
   s.email       = ["davidan1981@gmail.com"]
   s.homepage    = "https://github.com/davidan1981/rails_identity"
   s.summary     = "rails-identity is a Rails engine that provides a simple JWT-based session management service."
-  s.description = "See README.md"
+  s.description = <<-EOS
+rails-identity is a very simple Rails engine that provides JWT-based session
+management service for Rails apps. This plugin is suitable for pure RESTful
+API that does not require an intricate identity service. There are no
+cookies or non-unique IDs involved in this project.
+EOS
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]

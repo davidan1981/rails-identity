@@ -44,7 +44,8 @@ module RailsIdentity
     def options()
       # echo back access-control-request-headers
       if request.headers["Access-Control-Request-Headers"]
-        response["Access-Control-Allow-Headers"] = request.headers["Access-Control-Request-Headers"]
+        response["Access-Control-Allow-Headers"] =
+            request.headers["Access-Control-Request-Headers"]
       end
       render body: "", status: 200
     end
@@ -68,7 +69,8 @@ module RailsIdentity
         if !user_id.nil? && user_id != "current"
           @user = find_object(User, params[:user_id])  # will throw error if nil
           unless authorized?(@user)
-            raise Errors::UnauthorizedError, "Not authorized to access user #{user_id}"
+            raise Errors::UnauthorizedError,
+                  "Not authorized to access user #{user_id}"
           end
         elsif fallback || user_id == "current"
           @user = @auth_user
@@ -96,17 +98,10 @@ module RailsIdentity
       end
 
       ##
-      # Attempt to get a token for the session. Token must be specified in query
-      # string or part of the JSON object.
+      # Attempts to retrieve the payload encoded in the token. It checks if
+      # the token is "valid" according to JWT definition and not expired.
       #
-      # A Errors::InvalidTokenError is raised if the JWT is malformed or not
-      # valid against its secret.
-      #
-      def get_token(required_role: Roles::PUBLIC)
-        token = params[:token]
-
-        # Attempt to decode token w/o secret first to see if well-formed and
-        # not expired.
+      def get_token_payload(token)
         begin
           decoded = JWT.decode token, nil, false
         rescue JWT::DecodeError => e
@@ -118,33 +113,68 @@ module RailsIdentity
         # well formatted. Find out if the payload is well defined.
         payload = decoded[0]
         if payload.nil?
+          # :nocov:
           logger.error("Token payload is nil: #{token}")
           raise Errors::InvalidTokenError, "Invalid token payload: #{token}"
+          # :nocov:
         end
+        return payload
+      end
 
+      ##
+      # Truly verifies the token and its payload. It ensures the user and
+      # session specified in the token payload are indeed valid. The
+      # required role is also checked.
+      #
+      def verify_token_payload(token, payload, required_role: Roles::PUBLIC)
         user_uuid = payload["user_uuid"]
         session_uuid = payload["session_uuid"]
         if user_uuid.nil? || session_uuid.nil?
           logger.error("User UUID or session UUID is nil")
-          raise Errors::InvalidTokenError, "Invalid token payload content: #{token}"
+          raise Errors::InvalidTokenError,
+                "Invalid token payload content: #{token}"
         end
-        logger.debug("Token well formatted for user #{user_uuid}, session #{session_uuid}")
+        logger.debug("Token well formatted for user #{user_uuid},
+                     session #{session_uuid}")
 
+        logger.debug("Cache miss. Try database.")
+        auth_user = User.find_by_uuid(user_uuid)
+        if auth_user.nil? || auth_user.role < required_role
+          raise Errors::InvalidTokenError,
+                "Well-formed but invalid user token: #{token}"
+        end
+        auth_session = Session.find_by_uuid(session_uuid)
+        if auth_session.nil?
+          raise Errors::InvalidTokenError,
+                "Well-formed but invalid session token: #{token}"
+        end
+        begin
+          JWT.decode token, auth_session.secret, true
+        rescue JWT::DecodeError => e
+          logger.error(e.message)
+          raise Errors::InvalidTokenError, "Cannot verify token: #{token}"
+        end
+        logger.debug("Token well formatted and verified. Set cache.")
+        return auth_session
+      end
+
+      ##
+      # Attempt to get a token for the session. Token must be specified in
+      # query string or part of the JSON object.
+      #
+      # A Errors::InvalidTokenError is raised if the JWT is malformed or not
+      # valid against its secret.
+      #
+      def get_token(required_role: Roles::PUBLIC)
+        token = params[:token]
+        payload = get_token_payload(token)
         # Look up the cache. If present, use it and skip the verification.
-        @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{session_uuid}")
+        # Use token itself as part of the key so it's *verified*.
+        @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{token}")
         if @auth_session.nil?
-          logger.debug("Cache miss. Try database.")
-          auth_user = User.find_by_uuid(user_uuid)
-          if auth_user.nil? || auth_user.role < required_role
-            raise Errors::InvalidTokenError, "Well-formed but invalid user token: #{token}"
-          end
-          @auth_session = Session.find_by_uuid(session_uuid)
-          if @auth_session.nil?
-            raise Errors::InvalidTokenError, "Well-formed but invalid session token: #{token}"
-          end
-          JWT.decode token, @auth_session.secret, true
-          logger.debug("Token well formatted and verified. Set cache.")
-          Rails.cache.write("#{CACHE_PREFIX}-session-#{session_uuid}", @auth_session)
+          @auth_session = verify_token_payload(token, payload,
+                                               required_role: required_role)
+          Rails.cache.write("#{CACHE_PREFIX}-session-#{token}", @auth_session)
         end
         @auth_user = @auth_session.user
         @token = @auth_session.token

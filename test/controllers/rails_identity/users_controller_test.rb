@@ -118,6 +118,57 @@ module RailsIdentity
       assert_equal 1, json["errors"].length
     end
 
+    test "cannot show using well-formed but non-existing token" do
+      iat = Time.now.to_i
+      payload = {
+        user_uuid: @session.user_uuid,
+        session_uuid: @session.uuid,
+        role: @session.user.role,
+        iat: iat,
+        exp: iat + 60
+      }
+      secret = UUIDTools::UUID.random_create
+      token = JWT.encode(payload, secret, 'HS256')
+      get :show, id: 1, token: token
+      assert_response 401
+    end
+
+    test "cannot show using ill-formed" do
+      iat = Time.now.to_i
+      payload = {
+        session_uuid: @session.uuid,
+        role: @session.user.role,
+        iat: iat,
+        exp: iat + 60
+      }
+      secret = UUIDTools::UUID.random_create
+      token = JWT.encode(payload, secret, 'HS256')
+      get :show, id: 1, token: token
+      assert_response 401
+    end
+
+    test "cannot show using well-formed but bogus payload" do
+      iat = Time.now.to_i
+      payload = {
+        user_uuid: @session.user_uuid,
+        session_uuid: "doesnotexist",
+        role: @session.user.role,
+        iat: iat,
+        exp: iat + 60
+      }
+      secret = UUIDTools::UUID.random_create
+      token = JWT.encode(payload, secret, 'HS256')
+      get :show, id: 1, token: token
+      assert_response 401
+    end
+
+    test "cannot show using no token payload" do
+      secret = UUIDTools::UUID.random_create
+      token = JWT.encode({}, secret, 'HS256')
+      get :show, id: 1, token: token
+      assert_response 401
+    end
+
     test "update a user" do
       user = rails_identity_users(:one)
       old_password_digest = user.password_digest
