@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = RailsIdentity::VERSION
   s.authors     = ["David An"]
   s.email       = ["davidan1981@gmail.com"]
-  s.homepage    = "https://github.com/davidan1981/rails_identity"
+  s.homepage    = "https://github.com/davidan1981/rails-identity"
   s.summary     = "rails-identity is a Rails engine that provides a simple JWT-based session management service."
   s.description = <<-EOS
 rails-identity is a very simple Rails engine that provides JWT-based session
