@@ -29,9 +29,17 @@ module RailsIdentity
     # is optional.
     #
     def create
+      logger.debug("Create new user")
       @user = User.new(user_params)
       if @user.save
+
+        # Save succeeded. Render the response based on the created user.
         render json: @user, except: [:verification_token, :reset_token, :password_digest], status: 201
+
+        # Then, issue the verification token and send the email for
+        # verification.
+        @user.issue_token(:verification_token)
+        @user.save
         UserMailer.email_verification(@user).deliver_later
       else
         render_errors 400, @user.errors.full_messages
@@ -42,7 +50,7 @@ module RailsIdentity
     # Renders a user data.
     #
     def show
-      render json: @user, except: [:password_digest], methods: [:role]
+      render json: @user, except: [:password_digest]
     end
 
     ##
@@ -52,7 +60,7 @@ module RailsIdentity
     #   - Issue a reset token
     #     If params has :issue_reset_token set to true, the action will
     #     issue a reset token for the user and returns 204. Yes, 204 No
-    #     Content. TODO: in the future, the action will trigger an email.
+    #     Content.
     #   - Reset the password
     #     Two ways to reset password:
     #       - Provide the old password along with the new password and

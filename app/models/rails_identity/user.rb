@@ -19,9 +19,6 @@ module RailsIdentity
     #
     def initialize(attributes = {})
       super
-      session = Session.new(user: self, seconds: 3600)
-      self.verification_token = session.token
-      self.verified = false
     end
 
     ##

@@ -18,7 +18,7 @@ module RailsIdentity
       self.uuid = UUIDTools::UUID.timestamp_create().to_s
       iat = Time.now.to_i
       payload = {
-        user_uuid: self.user_uuid,
+        user_uuid: self.user.uuid,
         session_uuid: self.uuid,
         role: self.user.role,
         iat: iat,

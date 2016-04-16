@@ -15,8 +15,6 @@ module RailsIdentity
     test "user is valid with username and password" do
       user = User.new(username: "foo@example.com", password: "secret")
       assert user.save
-      assert_not_nil user.verification_token
-      assert_nil user.reset_token
     end
 
     test "user can issue a reset token" do

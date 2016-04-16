@@ -214,7 +214,7 @@ module RailsIdentity
       #
       def authorized?(obj)
         logger.debug("Checking to see if authorized to access object")
-        if !@auth_user
+        if @auth_user.nil?
           # :nocov:
           return false
           # :nocov:
