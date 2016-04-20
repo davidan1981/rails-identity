@@ -5,13 +5,14 @@
 [![Code Climate](https://codeclimate.com/github/davidan1981/rails-identity/badges/gpa.svg)](https://codeclimate.com/github/davidan1981/rails-identity)
 [![Gem Version](https://badge.fury.io/rb/rails-identity.svg)](https://badge.fury.io/rb/rails-identity)
 
-rails-identity is a very simple Rails engine that provides JWT-based session
-management service for Rails apps. This plugin is suitable for pure RESTful
-API that does not require an intricate identity service. There are no
-cookies or non-unique IDs involved in this project.
+rails-identity is a very simple Rails engine that provides
+[JWT](https://jwt.io/)-based session management service for Rails apps. This
+plugin is suitable for pure RESTful API that does not require an intricate
+identity service. There are no cookies or non-unique IDs involved in this
+project.
 
-This documentation uses [httpie](https://github.zom/) to demonstrate making
-HTTP requests from command line.
+This documentation uses [httpie](https://github.zom/) (rather than `curl`)
+to demonstrate making HTTP requests from the command line.
 
 ## Features
 
@@ -24,10 +25,10 @@ HTTP requests from command line.
 
 ## Install
 
-Note that rails-identity is still in early development, so clone the repo.
-Go to your app's directory and add this line to your `Gemfile`:
+Install the gem, or
+go to your app's directory and add this line to your `Gemfile`:
 
-    gem 'rails-identity', path: '/path/to/rails-identity/local/repo'
+    gem 'rails-identity'
 
 Then, add the following line in `application.rb`:
 
@@ -137,7 +138,7 @@ Notice this is essentially a login process for single-page apps.
 A session can be deleted via a DELETE method. This is essentially a logout
 process.
 
-    $ http DELETE localhost:3000/session/b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
+    $ http DELETE localhost:3000/sessions/b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
 
     HTTP/1.1 204 No Content
 
@@ -190,7 +191,7 @@ issued for the user.
 ### How to Authorize Requests
 
 rails-identity is designed to be used in your app to authorize requests as
-well. Use `RailsIdentity::ApplicationController.require_token` as a
-`before_action` callback. Alternatively, you may use `accept_token` or
-`require_admin_token` to optionally allow a token or require an admin token,
-respectively.
+well. Use `RailsIdentity::ApplicationHelper.require_token` as a
+`before_action` callback for actions that require a token. Alternatively,
+you may use `accept_token` or `require_admin_token` to optionally allow a
+token or require an admin token, respectively.
