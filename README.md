@@ -22,6 +22,7 @@ to demonstrate making HTTP requests from the command line.
 * Email verification token
 * Password reset token
 * Authorization cache for performance
+* STI `User` model
 
 ## Install
 
@@ -69,6 +70,17 @@ email verification token and password reset token. Note that the
 default email template is not sufficient for real use. 
 You must define your own mailer action views to cater emails for 
 your need.
+
+### Other Changes
+
+`RailsIdentity::User` model is a STI model. It means your app can inherit
+from `RailsIdentity::User` with additional attributes. All data will be
+stored in `rails_identity_users` table. This is particularly useful if you
+want to extend the model to meet your needs.
+
+    class User < RailsIdentity::User
+      # more validations, attributes, methods, ...
+    end
 
 ### Running Your App
 
