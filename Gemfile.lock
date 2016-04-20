@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails-identity (0.1.0)
+    rails-identity (0.1.1)
       bcrypt (~> 3.1.7)
       coveralls
       jwt (~> 1.5.4)
