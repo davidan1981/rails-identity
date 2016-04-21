@@ -11,7 +11,7 @@ plugin is suitable for pure RESTful API that does not require an intricate
 identity service. There are no cookies or non-unique IDs involved in this
 project.
 
-This documentation uses [httpie](https://github.zom/) (rather than `curl`)
+This documentation uses [httpie](https://github.zom/) (rather than curl)
 to demonstrate making HTTP requests from the command line.
 
 ## Features
