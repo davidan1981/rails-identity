@@ -11,9 +11,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160420012342) do
+ActiveRecord::Schema.define(version: 20160421125651) do
 
-  create_table "rails_identity_sessions", force: :cascade do |t|
+  create_table "rails_identity_sessions", id: false, force: :cascade do |t|
     t.string   "uuid"
     t.string   "user_uuid",  null: false
     t.string   "token",      null: false
@@ -23,7 +23,7 @@ ActiveRecord::Schema.define(version: 20160420012342) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "rails_identity_users", force: :cascade do |t|
+  create_table "rails_identity_users", id: false, force: :cascade do |t|
     t.string   "uuid"
     t.string   "username"
     t.string   "password_digest"
