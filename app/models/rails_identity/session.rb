@@ -1,6 +1,6 @@
 module RailsIdentity
   class Session < ActiveRecord::Base
-    include UUIDModel
+    include Repia::UUIDModel
     # does not act as paranoid!
 
     belongs_to :user, foreign_key: "user_uuid", primary_key: "uuid"

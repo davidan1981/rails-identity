@@ -41,7 +41,7 @@ module RailsIdentity
     def create
       @user = User.find_by_username(session_params[:username])
       if (@user && @user.authenticate(session_params[:password])) || get_user()
-        raise Errors::UnauthorizedError unless @user.verified
+        raise Repia::Errors::Unauthorized unless @user.verified
         @session = Session.new(user: @user)
         if @session.save
           render json: @session, except: [:secret], status: 201
@@ -80,10 +80,10 @@ module RailsIdentity
       ##
       # Get the specified or current session.
       # 
-      # An Errors::ObjectNotFoundError is raised if the session does not
+      # An Repia::Errors::NotFound is raised if the session does not
       # exist (or deleted due to expiration).
       #
-      # An Errors::UnauthorizedError is raised if the authenticated user
+      # An Repia::Errors::Unauthorized is raised if the authenticated user
       # does not have authorization for the specified session.
       #
       def get_session
@@ -93,10 +93,10 @@ module RailsIdentity
         end
         @session = find_object(Session, session_id)
         if !authorized?(@session)
-          raise Errors::UnauthorizedError
+          raise Repia::Errors::Unauthorized
         elsif @session.expired?
           @session.destroy
-          raise Errors::ObjectNotFoundError
+          raise Repia::Errors::NotFound
         end
       end
 

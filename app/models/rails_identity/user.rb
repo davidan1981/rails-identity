@@ -1,6 +1,6 @@
 module RailsIdentity
   class User < ActiveRecord::Base
-    include UUIDModel
+    include Repia::UUIDModel
     acts_as_paranoid
     has_secure_password
 

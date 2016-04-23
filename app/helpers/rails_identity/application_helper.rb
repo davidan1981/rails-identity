@@ -2,28 +2,14 @@ module RailsIdentity
   module ApplicationHelper
 
     ##
-    # Renders a single error.
-    #
-    def render_error(status, msg)
-      render json: {errors: [msg]}, status: status
-    end
-
-    ##
-    # Renders multiple errors
-    #
-    def render_errors(status, msgs)
-      render json: {errors: msgs}, status: status
-    end
-
-    ##
     # Helper method to get the user object in the request context. There
     # are two ways to specify the user id--one in the routing or the auth
     # context. Only admin can actually specify the user id in the routing.
     #
-    # An Errors::UnauthorizedError is raised if the authenticated user is
+    # An Repia::Errors::Unauthorized is raised if the authenticated user is
     # not authorized for the specified user information.
     #
-    # An Errors::ObjectNotFoundError is raised if the specified user cannot
+    # An Repia::Errors::NotFound is raised if the specified user cannot
     # be found.
     # 
     def get_user(fallback: true)
@@ -32,14 +18,14 @@ module RailsIdentity
       if !user_id.nil? && user_id != "current"
         @user = find_object(User, params[:user_id])  # will throw error if nil
         unless authorized?(@user)
-          raise Errors::UnauthorizedError,
+          raise Repia::Errors::Unauthorized,
                 "Not authorized to access user #{user_id}"
         end
       elsif fallback || user_id == "current"
         @user = @auth_user
       else
         # :nocov:
-        raise Errors::ObjectNotFoundError, "User #{user_id} does not exist"
+        raise Repia::Errors::NotFound, "User #{user_id} does not exist"
         # :nocov:
       end
     end
@@ -48,10 +34,10 @@ module RailsIdentity
     # Finds an object by model and UUID and throws an error (which will be
     # caught and re-thrown as an HTTP error.)
     #
-    # An Errors::ObjectNotFoundError is raised if specified to do so when
+    # An Repia::Errors::NotFound is raised if specified to do so when
     # the object could not be found using the uuid.
     #
-    def find_object(model, uuid, error: Errors::ObjectNotFoundError)
+    def find_object(model, uuid, error: Repia::Errors::NotFound)
       logger.debug("Attempting to get #{model.name} #{uuid}")
       obj = model.find_by_uuid(uuid)
       if obj.nil? && !error.nil?
@@ -114,14 +100,14 @@ module RailsIdentity
       # Attempts to retrieve the payload encoded in the token. It checks if
       # the token is "valid" according to JWT definition and not expired.
       #
-      # An Errors::InvalidTokenError is raised if token cannot be decoded.
+      # An Repia::Errors::Unauthorized is raised if token cannot be decoded.
       #
       def get_token_payload(token)
         begin
           decoded = JWT.decode token, nil, false
         rescue JWT::DecodeError => e
           logger.error("Token decode error: #{e.message}")
-          raise Errors::InvalidTokenError, "Invalid token: #{token}"
+          raise Repia::Errors::Unauthorized, "Invalid token: #{token}"
         end
 
         # At this point, we know that the token is not expired and
@@ -130,7 +116,7 @@ module RailsIdentity
         if payload.nil?
           # :nocov:
           logger.error("Token payload is nil: #{token}")
-          raise Errors::InvalidTokenError, "Invalid token payload: #{token}"
+          raise Repia::Errors::Unauthorized, "Invalid token payload: #{token}"
           # :nocov:
         end
         return payload
@@ -141,7 +127,7 @@ module RailsIdentity
       # session specified in the token payload are indeed valid. The
       # required role is also checked.
       #
-      # An Errors::InvalidTokenError is thrown for all cases where token is
+      # An Repia::Errors::Unauthorized is thrown for all cases where token is
       # invalid.
       #
       def verify_token_payload(token, payload, required_role: Roles::PUBLIC)
@@ -149,7 +135,7 @@ module RailsIdentity
         session_uuid = payload["session_uuid"]
         if user_uuid.nil? || session_uuid.nil?
           logger.error("User UUID or session UUID is nil")
-          raise Errors::InvalidTokenError,
+          raise Repia::Errors::Unauthorized,
                 "Invalid token payload content: #{token}"
         end
         logger.debug("Token well formatted for user #{user_uuid},
@@ -158,19 +144,19 @@ module RailsIdentity
         logger.debug("Cache miss. Try database.")
         auth_user = User.find_by_uuid(user_uuid)
         if auth_user.nil? || auth_user.role < required_role
-          raise Errors::InvalidTokenError,
+          raise Repia::Errors::Unauthorized,
                 "Well-formed but invalid user token: #{token}"
         end
         auth_session = Session.find_by_uuid(session_uuid)
         if auth_session.nil?
-          raise Errors::InvalidTokenError,
+          raise Repia::Errors::Unauthorized,
                 "Well-formed but invalid session token: #{token}"
         end
         begin
           JWT.decode token, auth_session.secret, true
         rescue JWT::DecodeError => e
           logger.error(e.message)
-          raise Errors::InvalidTokenError, "Cannot verify token: #{token}"
+          raise Repia::Errors::Unauthorized, "Cannot verify token: #{token}"
         end
         logger.debug("Token well formatted and verified. Set cache.")
         return auth_session

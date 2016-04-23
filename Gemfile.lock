@@ -106,6 +106,8 @@ GEM
       rake (>= 0.8.7)
       thor (>= 0.18.1, < 2.0)
     rake (11.1.1)
+    repia (0.0.1)
+      rails (~> 4.2.6)
     simplecov (0.11.2)
       docile (~> 1.1.0)
       json (~> 1.8)
@@ -137,6 +139,7 @@ DEPENDENCIES
   jwt (~> 1.5.4)
   paranoia (~> 2.0)
   rails-identity!
+  repia
   simplecov
   sqlite3
   uuidtools (~> 2.1.5)

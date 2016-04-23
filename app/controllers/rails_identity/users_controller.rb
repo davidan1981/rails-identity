@@ -73,9 +73,9 @@ module RailsIdentity
       if params[:issue_reset_token] || params[:issue_verification_token]
         # For issuing a reset token, one does not need an auth token. so do
         # not authorize the request.
-        raise Errors::UnauthorizedError unless params[:id] == "current"
+        raise Repia::Errors::Unauthorized unless params[:id] == "current"
         get_user_for_token()
-        raise Errors::UnauthorizedError unless params[:username] == @user.username
+        raise Repia::Errors::Unauthorized unless params[:username] == @user.username
         if params[:issue_reset_token]
           update_token(:reset_token)
         else
@@ -85,9 +85,9 @@ module RailsIdentity
         get_user()
         if params[:password]
           if params[:old_password]
-            raise Errors::UnauthorizedError unless @user.authenticate(params[:old_password])
+            raise Repia::Errors::Unauthorized unless @user.authenticate(params[:old_password])
           else
-            raise Errors::UnauthorizedError unless @token == @user.reset_token
+            raise Repia::Errors::Unauthorized unless @token == @user.reset_token
           end
         end
         update_user(user_params)
@@ -144,11 +144,11 @@ module RailsIdentity
       #
       def get_user
         if params[:id] == "current"
-          raise Errors::UnauthorizedError if @auth_user.nil?
+          raise Repia::Errors::Unauthorized if @auth_user.nil?
           params[:id] = @auth_user.uuid
         end
         @user = find_object(User, params[:id])
-        raise Errors::UnauthorizedError unless authorized?(@user)
+        raise Repia::Errors::Unauthorized unless authorized?(@user)
         return @user
       end
 
@@ -158,7 +158,7 @@ module RailsIdentity
       #
       def get_user_for_token
         @user = User.find_by_username(params[:username])
-        raise Errors::ObjectNotFoundError if @user.nil?
+        raise Repia::Errors::NotFound if @user.nil?
         return @user
       end
 
