@@ -29,6 +29,7 @@ EOS
   s.add_dependency "paranoia", "~> 2.0"
   s.add_dependency "simplecov"
   s.add_dependency "coveralls"
+  s.add_dependency "repia"
 
   s.add_development_dependency "sqlite3"
 end
