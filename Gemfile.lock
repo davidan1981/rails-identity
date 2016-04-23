@@ -1,12 +1,13 @@
 PATH
   remote: .
   specs:
-    rails-identity (0.2.0)
+    rails-identity (0.2.1)
       bcrypt (~> 3.1.7)
       coveralls
       jwt (~> 1.5.4)
       paranoia (~> 2.0)
       rails (~> 4.2.3)
+      repia
       simplecov
       uuidtools (~> 2.1.5)
 
