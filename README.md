@@ -204,3 +204,23 @@ well. Use `RailsIdentity::ApplicationHelper.require_token` as a
 `before_action` callback for actions that require a token. Alternatively,
 you may use `accept_token` or `require_admin_token` to optionally allow a
 token or require an admin token, respectively.
+
+### Other Notes
+
+#### Instance Variables
+
+`ApplicationHelper` module will define the following instance variables:
+
+* `auth_user` - the authenticated user object
+* `auth_session` - the authenticated session
+* `token` - the token that authenticated the current session
+* `user` - the context user, only available if `get_user` is called 
+
+#### Roles
+
+For convenience, rails-identity pre-defined four roles:
+
+* Owner (1000) - the owner of the app
+* Admin (100) - the admin(s) of the app
+* User (10) - the user(s) of the app
+* Public (0) - the rest of the world
