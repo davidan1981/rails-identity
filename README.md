@@ -211,10 +211,10 @@ token or require an admin token, respectively.
 
 `ApplicationHelper` module will define the following instance variables:
 
-* `auth_user` - the authenticated user object
-* `auth_session` - the authenticated session
-* `token` - the token that authenticated the current session
-* `user` - the context user, only available if `get_user` is called 
+* `@auth_user` - the authenticated user object
+* `@auth_session` - the authenticated session
+* `@token` - the token that authenticated the current session
+* `@user` - the context user, only available if `get_user` is called 
 
 #### Roles
 
