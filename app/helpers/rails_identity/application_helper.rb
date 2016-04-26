@@ -2,9 +2,9 @@ module RailsIdentity
   module ApplicationHelper
 
     ##
-    # Helper method to get the user object in the request context. There
-    # are two ways to specify the user id--one in the routing or the auth
-    # context. Only admin can actually specify the user id in the routing.
+    # Helper method to get the user object in the request, which is
+    # specified by :user_id parameter. There are two ways to specify the
+    # user id--one in the routing or the auth context.
     #
     # An Repia::Errors::Unauthorized is raised if the authenticated user is
     # not authorized for the specified user information.
@@ -90,7 +90,7 @@ module RailsIdentity
       elsif obj.is_a? User
         return obj == @auth_user
       else
-        return obj.user == @auth_user
+        return obj.try(:user) == @auth_user
       end
     end
 
