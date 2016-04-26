@@ -205,6 +205,16 @@ well. Use `RailsIdentity::ApplicationHelper.require_token` as a
 you may use `accept_token` or `require_admin_token` to optionally allow a
 token or require an admin token, respectively.
 
+To determine if the authenticated user has access to a specific resource
+object, use `authorized?`. An example of a resource authorization callback
+looks like the following:
+
+    def authorize_user_to_obj(obj)
+      unless authorized?(obj)
+        raise Repia::Errors::Unauthorized
+      end
+    end
+
 ### Other Notes
 
 #### Instance Variables
@@ -215,6 +225,8 @@ token or require an admin token, respectively.
 * `@auth_session` - the authenticated session
 * `@token` - the token that authenticated the current session
 * `@user` - the context user, only available if `get_user` is called 
+
+Try not to overload these variables. (Instead, utilize them!)
 
 #### Roles
 
