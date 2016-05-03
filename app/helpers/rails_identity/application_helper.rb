@@ -1,5 +1,6 @@
 module RailsIdentity
   module ApplicationHelper
+    include Repia::BaseHelper
 
     ##
     # Helper method to get the user object in the request, which is
@@ -28,22 +29,6 @@ module RailsIdentity
         raise Repia::Errors::NotFound, "User #{user_id} does not exist"
         # :nocov:
       end
-    end
-
-    ##
-    # Finds an object by model and UUID and throws an error (which will be
-    # caught and re-thrown as an HTTP error.)
-    #
-    # An Repia::Errors::NotFound is raised if specified to do so when
-    # the object could not be found using the uuid.
-    #
-    def find_object(model, uuid, error: Repia::Errors::NotFound)
-      logger.debug("Attempting to get #{model.name} #{uuid}")
-      obj = model.find_by_uuid(uuid)
-      if obj.nil? && !error.nil?
-        raise error, "#{model.name} #{uuid} cannot be found" 
-      end
-      return obj
     end
 
     ## 

@@ -17,6 +17,6 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'coveralls', require: false
 gem 'jwt', '~> 1.5.4'
 gem 'paranoia', '~> 2.0'
-gem 'repia', '~> 0.0.2'
+gem 'repia', '~> 0.1.1'
 gem 'simplecov', :require => false, :group => :test
 gem 'uuidtools', '~> 2.1.5'
