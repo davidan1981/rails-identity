@@ -34,7 +34,9 @@ module RailsIdentity
       if @user.save
 
         # Save succeeded. Render the response based on the created user.
-        render json: @user, except: [:verification_token, :reset_token, :password_digest], status: 201
+        render json: @user,
+               except: [:verification_token, :reset_token, :password_digest],
+               status: 201
 
         # Then, issue the verification token and send the email for
         # verification.
@@ -84,13 +86,7 @@ module RailsIdentity
         end
       else
         get_user()
-        if params[:password]
-          if params[:old_password]
-            raise Repia::Errors::Unauthorized unless @user.authenticate(params[:old_password])
-          else
-            raise Repia::Errors::Unauthorized unless @token == @user.reset_token
-          end
-        end
+        allow_password_change? if params[:password]
         update_user(user_params)
       end
     end
@@ -110,8 +106,31 @@ module RailsIdentity
 
     protected
 
+      ##
+      # Override this method to app specific mailer.
+      #
       def user_mailer
         return UserMailer
+      end
+
+      ##
+      # Check if password change should be allowed. Two ways to do this: one
+      # is to use old password or to use a valid reset token.
+      #
+      # A Repia::Errors::Unauthorized is thrown for invalid old password or
+      # invalid reset token
+      #
+      def allow_password_change?
+        if params[:old_password]
+          unless @user.authenticate(params[:old_password])
+            raise Repia::Errors::Unauthorized 
+          end
+        else
+          unless @token == @user.reset_token
+            raise Repia::Errors::Unauthorized
+          end
+        end
+        return true
       end
 
       ## 

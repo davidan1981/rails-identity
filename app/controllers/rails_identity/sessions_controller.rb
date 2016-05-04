@@ -38,6 +38,8 @@ module RailsIdentity
     # token based authentication. If the latter doesn't make sense, just use
     # the username and password approach.
     #
+    # A Repia::Errors::Unauthorized is thrown if user is not verified.
+    #
     def create
       @user = User.find_by_username(session_params[:username])
       if (@user && @user.authenticate(session_params[:password])) || get_user()
@@ -80,10 +82,10 @@ module RailsIdentity
       ##
       # Get the specified or current session.
       # 
-      # An Repia::Errors::NotFound is raised if the session does not
+      # A Repia::Errors::NotFound is raised if the session does not
       # exist (or deleted due to expiration).
       #
-      # An Repia::Errors::Unauthorized is raised if the authenticated user
+      # A Repia::Errors::Unauthorized is raised if the authenticated user
       # does not have authorization for the specified session.
       #
       def get_session
