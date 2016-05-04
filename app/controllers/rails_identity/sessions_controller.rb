@@ -70,7 +70,7 @@ module RailsIdentity
         render body: "", status: 204
       else 
         # :nocov:
-        render_error 500, "Something went wrong. Oops!"
+        render_error 400, @session.errors.full_messages
         # :nocov:
       end
     end

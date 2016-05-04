@@ -29,19 +29,25 @@ to demonstrate making HTTP requests from the command line.
 Install the gem, or
 go to your app's directory and add this line to your `Gemfile`:
 
-    gem 'rails-identity'
+```ruby
+gem 'rails-identity'
+```
 
 Then, add the following line in `application.rb`:
 
-    require 'rails_identity'
+```ruby
+require 'rails_identity'
+```
 
 And the following in `route.rb`:
 
-    require 'rails_identity'
+```ruby
+require 'rails_identity'
 
-    Rails.application.routes.draw do
-      mount RailsIdentity::Engine, at: "/"
-    end
+Rails.application.routes.draw do
+  mount RailsIdentity::Engine, at: "/"
+end
+```
 
 Note that you may designate a different target prefix other than the root.
 Then, run `bundle install` and do `rake routes` to verify the routes.
@@ -62,8 +68,10 @@ requires a back-end module. For example, you can use
 [DelayedJob](https://github.com/collectiveidea/delayed_job) by adding the
 following in Gemfile.
 
-    gem 'delayed_job_active_record'
-    gem 'daemons'
+```ruby
+gem 'delayed_job_active_record'
+gem 'daemons'
+```
     
 Also, email service must be specified in your app for sending out
 email verification token and password reset token. Note that the 
@@ -78,9 +86,11 @@ from `RailsIdentity::User` with additional attributes. All data will be
 stored in `rails_identity_users` table. This is particularly useful if you
 want to extend the model to meet your needs.
 
-    class User < RailsIdentity::User
-      # more validations, attributes, methods, ...
-    end
+```ruby
+class User < RailsIdentity::User
+  # more validations, attributes, methods, ...
+end
+```
 
 ### Running Your App
 
@@ -209,11 +219,13 @@ To determine if the authenticated user has access to a specific resource
 object, use `authorized?`. An example of a resource authorization callback
 looks like the following:
 
-    def authorize_user_to_obj(obj)
-      unless authorized?(obj)
-        raise Repia::Errors::Unauthorized
-      end
-    end
+```ruby
+def authorize_user_to_obj(obj)
+  unless authorized?(obj)
+    raise Repia::Errors::Unauthorized
+  end
+end
+```
 
 ### Other Notes
 

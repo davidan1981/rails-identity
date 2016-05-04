@@ -40,7 +40,7 @@ module RailsIdentity
         # verification.
         @user.issue_token(:verification_token)
         @user.save
-        UserMailer.email_verification(@user).deliver_later
+        user_mailer.email_verification(@user).deliver_later
       else
         render_errors 400, @user.errors.full_messages
       end
@@ -54,28 +54,29 @@ module RailsIdentity
     end
 
     ##
-    # Patches the user. Some overloading operations here. There are five
-    # notable ways to update a user.
+    # Patches the user object. There are four notable operations:
     #
-    #   - Issue a reset token
-    #     If params has :issue_reset_token set to true, the action will
-    #     issue a reset token for the user and returns 204. Yes, 204 No
-    #     Content.
-    #   - Reset the password
-    #     Two ways to reset password:
-    #       - Provide the old password along with the new password and
-    #         confirmation.
-    #       - Provide the reset token as the auth token.
-    #   - Issue a verification token
-    #   - Change other data
+    # - issue reset token
+    # - issue verification token
+    # - change password
+    # - others
+    #
+    # Issuing either reset token or verification token requires NO
+    # authentication. However, for that reason, the request does not get any
+    # meaningful response. Instead, an email is sent out for either request.
+    #
+    # For changing password, there are two ways. One is to use old password
+    # and the other is to use reset token.
+    #
+    # Otherwise, it's a normal update operation.
     #
     def update
       if params[:issue_reset_token] || params[:issue_verification_token]
         # For issuing a reset token, one does not need an auth token. so do
-        # not authorize the request.
+        # not authorize the request. For consistency, we require the id to
+        # be "current".
         raise Repia::Errors::Unauthorized unless params[:id] == "current"
         get_user_for_token()
-        raise Repia::Errors::Unauthorized unless params[:username] == @user.username
         if params[:issue_reset_token]
           update_token(:reset_token)
         else
@@ -102,12 +103,16 @@ module RailsIdentity
         render body: '', status: 204
       else
         # :nocov:
-        render_error 500, "Something went wrong!"
+        render_error 400, @user.errors.full_messages
         # :nocov:
       end
     end
 
     protected
+
+      def user_mailer
+        return UserMailer
+      end
 
       ## 
       # This method normally updates the user using permitted params.
@@ -128,9 +133,9 @@ module RailsIdentity
         @user.issue_token(kind)
         @user.save
         if kind == :reset_token
-          UserMailer.password_reset(@user).deliver_later
+          user_mailer.password_reset(@user).deliver_later
         else
-          UserMailer.email_verification(@user).deliver_later
+          user_mailer.email_verification(@user).deliver_later
         end
         render body: '', status: 204
       end
