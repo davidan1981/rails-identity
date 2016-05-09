@@ -9,9 +9,9 @@ module RailsIdentity
 
     # All except user creation requires a session token. Note that reset
     # token is also a legit session token, so :require_token will suffice.
-    prepend_before_action :require_token, only: [:show, :destroy]
-    prepend_before_action :accept_token, only: [:update, :create]
-    prepend_before_action :require_admin_token, only: [:index]
+    prepend_before_action :require_auth, only: [:show, :destroy]
+    prepend_before_action :accept_auth, only: [:update, :create]
+    prepend_before_action :require_admin_auth, only: [:index]
 
     # Some actions must have a user specified.
     before_action :get_user, only: [:show, :destroy]

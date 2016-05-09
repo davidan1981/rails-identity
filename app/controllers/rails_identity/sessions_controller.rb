@@ -9,7 +9,7 @@ module RailsIdentity
   #
   class SessionsController < ApplicationController
 
-    prepend_before_action :require_token, except: [:create, :options]
+    prepend_before_action :require_auth, except: [:create, :options]
     before_action :get_session, only: [:show, :destroy]
     before_action :get_user, only: [:index]
 
@@ -91,6 +91,9 @@ module RailsIdentity
       def get_session
         session_id = params[:id]
         if session_id == "current"
+          if @auth_session.nil?
+            raise Repia::Errors::NotFound
+          end
           session_id = @auth_session.id
         end
         @session = find_object(Session, session_id)

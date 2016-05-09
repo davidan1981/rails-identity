@@ -18,6 +18,7 @@ module RailsIdentity
     # re-issue the verification token.
     #
     def initialize(attributes = {})
+      attributes[:api_key] = SecureRandom.hex(32)
       super
     end
 

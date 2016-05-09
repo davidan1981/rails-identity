@@ -31,11 +31,69 @@ module RailsIdentity
       end
     end
 
+    ##
+    # Requires authentication. Either token or api key must be present.
+    #
+    def require_auth
+      logger.debug("Requiring any authentication")
+      get_auth
+    end
+
+    ##
+    # Requires admin authentication. Either token or api key must be present
+    # and it should be an admin's.
+    #
+    def require_admin_auth
+      logger.debug("Requiring any admin authentication")
+      get_auth(required_role: Roles::ADMIN)
+    end
+
+    ##
+    # Accepts authentication if present. Either token or api key is
+    # accepted.
+    #
+    def accept_auth
+      logger.debug("Accepting any authentication")
+      begin
+        get_auth
+      rescue StandardError => e
+        logger.error("Suppressing error: #{e.message}")
+      end
+    end
+
+    ##
+    # Requires API key for authentication.
+    #
+    def require_api_key
+      logger.debug("Requiring api key")
+      get_api_key
+    end
+
+    ##
+    # Requires admin API key for authentication.
+    #
+    def require_admin_api_key
+      logger.debug("Requiring admin api key")
+      get_api_key(required_role: Roles::ADMIN)
+    end
+
+    ##
+    # Accepts API key for authentication if one is present.
+    #
+    def accept_api_key
+      logger.debug("Accepting api key")
+      begin
+        get_api_key
+      rescue StandardError => e
+        logger.error("Suppressing error: #{e.message}")
+      end
+    end
+
     ## 
     # Requires a token.
     #
     def require_token
-      logger.debug("Requires a token")
+      logger.debug("Requiring token")
       get_token
     end
 
@@ -44,7 +102,7 @@ module RailsIdentity
     # suppressed.
     #
     def accept_token()
-      logger.debug("Accepts a token")
+      logger.debug("Accepting token")
       begin
         get_token()
       rescue StandardError => e
@@ -57,7 +115,7 @@ module RailsIdentity
     # issued for an admin user (role == 1000).
     #
     def require_admin_token
-      logger.debug("Requires an admin token")
+      logger.debug("Requiring admin token")
       get_token(required_role: Roles::ADMIN)
     end
 
@@ -166,5 +224,39 @@ module RailsIdentity
         @token = @auth_session.token
       end
 
+      ##
+      # Get API key from the request.
+      #
+      # Raises a Repia::Errors::Unauthorized if API key is not valid (or not
+      # provided).
+      #
+      def get_api_key(required_role: Roles::PUBLIC)
+        api_key = params[:api_key]
+        if api_key.nil?
+          # This case is not likely, but as a safeguard in case migration
+          # has not gone well.
+          # :nocov:
+          raise Repia::Errors::Unauthorized, "Invalid api key"
+          # :nocov:
+        end
+        auth_user = User.find_by_api_key(api_key)
+        if auth_user.nil? || auth_user.role < required_role
+          raise Repia::Errors::Unauthorized, "Invalid api key"
+        end
+        @auth_user = auth_user
+        @auth_session = nil
+        @token = nil
+      end
+
+      ##
+      # Get auth data from the request. The token takes the precedence.
+      #
+      def get_auth(required_role: Roles::USER)
+        if params[:token]
+          get_token(required_role: required_role)
+        else
+          get_api_key(required_role: required_role)
+        end
+      end
   end
 end

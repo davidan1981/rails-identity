@@ -9,6 +9,7 @@ module RailsIdentity
       @routes = Engine.routes
       @session = rails_identity_sessions(:one)
       @token = @session.token
+      @api_key = rails_identity_users(:one).api_key
     end
 
     test "public can see options" do
@@ -44,6 +45,18 @@ module RailsIdentity
       assert_equal "foo@example.com", json["username"]
       assert_not json.has_key?("password_digest")
     end 
+
+    test "user can create another user" do
+      post :create, username: "foo@example.com", password: "secret",
+           password_confirmation: "secret", token: @token
+      assert_response :success
+    end
+
+    test "user can create another user with api key" do
+      post :create, username: "foo@example.com", password: "secret",
+           password_confirmation: "secret", api_key: @api_key
+      assert_response :success
+    end
 
     test "user cannot create an admin user" do
       post :create, username: "foo@example.com", password: "secret",

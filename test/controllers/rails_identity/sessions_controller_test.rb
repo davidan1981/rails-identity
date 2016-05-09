@@ -3,10 +3,11 @@ require 'test_helper'
 module RailsIdentity
   class SessionsControllerTest < ActionController::TestCase
     setup do
-      Rails.cache.clear
+      Rails.cache.clear  # always clear cache first
       @routes = Engine.routes
       @session = rails_identity_sessions(:one)
       @token = @session.token
+      @api_key = rails_identity_users(:one).api_key
     end
 
     test "public can see options" do
@@ -14,8 +15,25 @@ module RailsIdentity
       assert_response :success
     end
 
+    test "user cannot list sessions with invalid token" do
+      get :index, token: "invalidtoken"
+      assert_response 401
+    end
+
     test "user can list all his sessions" do 
       get :index, token: @token
+      assert_response :success
+      sessions = assigns(:sessions)
+      assert_not_nil sessions
+      all_his_sessions = Session.where(user: @session.user)
+      assert_equal sessions.length, all_his_sessions.length
+      sessions.each do |session|
+        assert session.user == @session.user
+      end
+    end
+
+    test "user can list all his sessions with api key" do
+      get :index, api_key: @api_key
       assert_response :success
       sessions = assigns(:sessions)
       assert_not_nil sessions
@@ -49,6 +67,11 @@ module RailsIdentity
 
     test "user cannot list other's sessions" do
       get :index, user_id: rails_identity_users(:two), token: @token
+      assert_response 401
+    end
+
+    test "user cannot list other's sessions with api key" do
+      get :index, user_id: rails_identity_users(:two), api_key: @api_key
       assert_response 401
     end
 
@@ -109,7 +132,7 @@ module RailsIdentity
       assert_response 401
     end
 
-    test "show a session" do
+    test "user can show session" do
       get :show, id: 1, token: @token
       assert_response 200
       json = JSON.parse(@response.body)
@@ -120,22 +143,46 @@ module RailsIdentity
       assert_equal @token, session.token
     end
 
-    test "show a current session" do
+    test "user can show session using api key" do
+      get :show, id: 1, api_key: @api_key
+      assert_response 200
+      json = JSON.parse(@response.body)
+      assert_equal @token, json["token"]
+    end
+
+    test "user can show current session" do
       get :show, id: "current", token: @token
       assert_response 200
       json = JSON.parse(@response.body)
       assert_equal @token, json["token"]
     end
 
-    test "cannot show other's session" do
+    test "user cannot show current session with api key" do
+      get :show, id: "current", api_key: @api_key
+      assert_response 404
+    end
+
+    test "user cannot show other's session" do
       get :show, id: 2, token: @token
       assert_response 401
     end
 
-    test "cannot show expired session" do
+    test "user cannot show other's session with api key" do
+      get :show, id: 2, api_key: @api_key
+      assert_response 401
+    end
+
+    test "user cannot show expired session" do
       session = Session.new(user: @session.user, seconds: -1)
       session.save()
       get :show, id: session.uuid, token: @token
+      assert_response 404
+    end
+
+    test "user cannot show expired session with api key" do
+      session = Session.new(user: @session.user, seconds: -1)
+      session.save()
+      get :show, id: session.uuid, api_key: @api_key
       assert_response 404
     end
 
@@ -154,29 +201,49 @@ module RailsIdentity
       assert_equal session.token, json["token"]
     end
 
-    test "cannot show a nonexisting session" do
+    test "admin can show other's session with api key" do
+      @session = rails_identity_sessions(:admin_one)
+      @token = @session.token
+      get :show, id: 1, api_key: @api_key
+      assert_response :success
+      json = JSON.parse(@response.body)
+      session = rails_identity_sessions(:one)
+      assert_equal session.token, json["token"]
+    end
+
+    test "user cannot show nonexisting session" do
       get :show, id: 999, token: @token
       assert_response 404
       json = JSON.parse(@response.body)
       assert json["errors"].length == 1
     end
 
-    test "delete a session" do
+    test "user can delete session" do
       delete :destroy, id: 1, token: @token
       assert_response 204
     end
 
-    test "delete a current session" do
+    test "user can delete session with api key" do
+      delete :destroy, id: 1, api_key: @api_key
+      assert_response 204
+    end
+
+    test "user can delete a current session" do
       delete :destroy, id: "current", token: @token
       assert_response 204
     end
 
-    test "cannot delete a non-existent session" do
+    test "user cannot delete a current session with api key" do
+      delete :destroy, id: "current", api_key: @api_key
+      assert_response 404
+    end
+
+    test "user cannot delete a non-existent session" do
       delete :destroy, id: 999, token: @token
       assert_response 404
     end
 
-    test "cannot delete other's session" do
+    test "user cannot delete other's session" do
       delete :destroy, id: 2, token: @token
       assert_response 401
     end
