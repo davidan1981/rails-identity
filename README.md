@@ -19,6 +19,7 @@ to demonstrate making HTTP requests from the command line.
 * Mountable Rails engine
 * RESTful API
 * JWT-based session management
+* API key-based access
 * Email verification token
 * Password reset token
 * Authorization cache for performance
@@ -162,10 +163,6 @@ process.
 
     HTTP/1.1 204 No Content
 
-NOTE: If you prefer, you may use `token` in the query parameter instead of a
-JSON property. This, however, may be a security concern as most browsers'
-history includes query paramters.
-
 ### Password Reset
 
 Since rails-identity is a RESTful service itself, password reset is done via
@@ -207,13 +204,25 @@ hour). So use it instead on the password reset request:
 The token used with the request _must_ match the reset token previously 
 issued for the user.
 
-### How to Authorize Requests
+### Authentication and Authorization
 
-rails-identity is designed to be used in your app to authorize requests as
-well. Use `RailsIdentity::ApplicationHelper.require_token` as a
-`before_action` callback for actions that require a token. Alternatively,
-you may use `accept_token` or `require_admin_token` to optionally allow a
-token or require an admin token, respectively.
+There are two ways to do general authentication: token or API key.
+
+To authorize a request to an action, use provided callbacks. rails-identity
+provides three controller callbacks for each approach:
+
+* Token
+    * `require_token`
+    * `require_admin_token`
+    * `accept_token` - If a token is given, rails-identity will validate it.
+* API key
+    * `require_api_key`
+    * `require_admin_api_key`
+    * `accept_api_key`  - If an API key is given, rails-identity will validate it.
+* Both
+    * `require_auth` - A token or an API key must be given.
+    * `require_admin_auth` - A token or an API key of an admin must be given.
+    * `accept_auth` - If either a token or an API key is given, rails-identity will validate it
 
 To determine if the authenticated user has access to a specific resource
 object, use `authorized?`. An example of a resource authorization callback
@@ -238,7 +247,9 @@ end
 * `@token` - the token that authenticated the current session
 * `@user` - the context user, only available if `get_user` is called 
 
-Try not to overload these variables. (Instead, utilize them!)
+Try not to overload these variables. You may use these variables to enforce
+further access control. Note that `@auth_session` and `@token` will be
+populated only if a token is used to authenticate.
 
 #### Roles
 
