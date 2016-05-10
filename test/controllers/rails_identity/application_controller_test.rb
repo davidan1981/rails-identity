@@ -38,9 +38,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :require_token, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, token: @token
       assert_response :success
@@ -52,9 +49,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :require_admin_token, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, token: @admin_token
       assert_response :success
@@ -67,9 +61,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :accept_token, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, token: @token
       assert_response :success
@@ -81,9 +72,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :require_api_key, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, api_key: @api_key
       assert_response :success
@@ -97,9 +85,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :require_admin_api_key, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, api_key: @admin_api_key
       assert_response :success
@@ -111,9 +96,6 @@ module RailsIdentity
       class ::RailsIdentity::TestsController < ApplicationController
         reset_callbacks :process_action
         before_action :accept_api_key, only: [:index]
-        def index
-          render json: {}, status: 200
-        end
       end
       get :index, api_key: @api_key
       assert_response :success
