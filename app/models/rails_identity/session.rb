@@ -40,5 +40,12 @@ module RailsIdentity
       return false
     end
 
+    def role
+      if @role.nil?
+        @role = user.role
+      end
+      return @role
+    end
+
   end
 end

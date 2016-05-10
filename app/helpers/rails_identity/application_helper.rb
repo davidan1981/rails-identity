@@ -209,6 +209,9 @@ module RailsIdentity
       # Attempt to get a token for the session. Token must be specified in
       # query string or part of the JSON object.
       #
+      # Raises a Repia::Errors::Unauthorized if cached session has less role
+      # than what's required.
+      #
       def get_token(required_role: Roles::PUBLIC)
         token = params[:token]
         payload = get_token_payload(token)
@@ -218,7 +221,10 @@ module RailsIdentity
         if @auth_session.nil?
           @auth_session = verify_token_payload(token, payload,
                                                required_role: required_role)
+          @auth_session.role  # NOTE: no-op
           Rails.cache.write("#{CACHE_PREFIX}-session-#{token}", @auth_session)
+        elsif @auth_session.role < required_role
+          raise Repia::Errors::Unauthorized
         end
         @auth_user = @auth_session.user
         @token = @auth_session.token
