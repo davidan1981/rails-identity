@@ -52,7 +52,7 @@ module RailsIdentity
       end
       get :index, token: @admin_token
       assert_response :success
-      Rails.cache.write("#{CACHE_PREFIX}-session-#{@token}", @session)
+      Cache.set({kind: :session, token: @token}, @session) 
       get :index, token: @token
       assert_response 401
     end

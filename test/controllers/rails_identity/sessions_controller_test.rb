@@ -138,7 +138,7 @@ module RailsIdentity
       json = JSON.parse(@response.body)
       assert_equal @token, json["token"]
       # Do a quick cache check
-      session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{json["token"]}")
+      session = Cache.get(kind: :session, token: json["token"])
       assert_not_nil session
       assert_equal @token, session.token
     end

@@ -217,12 +217,12 @@ module RailsIdentity
         payload = get_token_payload(token)
         # Look up the cache. If present, use it and skip the verification.
         # Use token itself as part of the key so it's *verified*.
-        @auth_session = Rails.cache.fetch("#{CACHE_PREFIX}-session-#{token}")
+        @auth_session = Cache.get(kind: :session, token: token)
         if @auth_session.nil?
           @auth_session = verify_token_payload(token, payload,
                                                required_role: required_role)
           @auth_session.role  # NOTE: no-op
-          Rails.cache.write("#{CACHE_PREFIX}-session-#{token}", @auth_session)
+          Cache.set({kind: :session, token: token}, @auth_session)
         elsif @auth_session.role < required_role
           raise Repia::Errors::Unauthorized
         end
