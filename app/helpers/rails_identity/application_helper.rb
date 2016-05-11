@@ -32,91 +32,79 @@ module RailsIdentity
     end
 
     ##
+    # :method: require_auth
+    #
     # Requires authentication. Either token or api key must be present.
     #
-    def require_auth
-      logger.debug("Requiring any authentication")
-      get_auth
-    end
 
     ##
-    # Requires admin authentication. Either token or api key must be present
-    # and it should be an admin's.
+    # :method: require_admin_auth
     #
-    def require_admin_auth
-      logger.debug("Requiring any admin authentication")
-      get_auth(required_role: Roles::ADMIN)
-    end
+    # Requires admin authentication. Either token or api key of admin must
+    # be present.
+    #
 
     ##
-    # Accepts authentication if present. Either token or api key is
-    # accepted.
+    # :method: accept_auth
     #
-    def accept_auth
-      logger.debug("Accepting any authentication")
-      begin
-        get_auth
-      rescue StandardError => e
-        logger.error("Suppressing error: #{e.message}")
+    # Accepts authentication if present. Either token or api key is accepted.
+    #
+
+    ##
+    # :method: require_token
+    #
+    # Requires authentication. Token must be present.
+    #
+
+    ##
+    # :method: require_admin_token
+    #
+    # Requires admin authentication. Admin token must # be present.
+    #
+
+    ##
+    # :method: accept_token
+    #
+    # Accepts authentication if present. Only token is accepted.
+    #
+    ##
+    # :method: require_api_key
+    #
+    # Requires authentication. API key must be present.
+    #
+
+    ##
+    # :method: require_admin_api_key
+    #
+    # Requires admin authentication. Admin api key must be present.
+    #
+
+    ##
+    # :method: accept_api_key
+    #
+    # Accepts authentication if present. Only api key is accepted.
+    #
+
+    #
+    # Metaprogramming baby
+    #
+    ["auth", "token", "api_key"].each do |suffix|
+
+      define_method "require_#{suffix}" do
+        self.method("get_#{suffix}").call
       end
-    end
 
-    ##
-    # Requires API key for authentication.
-    #
-    def require_api_key
-      logger.debug("Requiring api key")
-      get_api_key
-    end
-
-    ##
-    # Requires admin API key for authentication.
-    #
-    def require_admin_api_key
-      logger.debug("Requiring admin api key")
-      get_api_key(required_role: Roles::ADMIN)
-    end
-
-    ##
-    # Accepts API key for authentication if one is present.
-    #
-    def accept_api_key
-      logger.debug("Accepting api key")
-      begin
-        get_api_key
-      rescue StandardError => e
-        logger.error("Suppressing error: #{e.message}")
+      define_method "require_admin_#{suffix}" do
+        self.method("get_#{suffix}").call(required_role: Roles::ADMIN)
       end
-    end
 
-    ## 
-    # Requires a token.
-    #
-    def require_token
-      logger.debug("Requiring token")
-      get_token
-    end
-
-    ##
-    # Accepts a token if present. If not, it's still ok. ALL errors are
-    # suppressed.
-    #
-    def accept_token()
-      logger.debug("Accepting token")
-      begin
-        get_token()
-      rescue StandardError => e
-        logger.error("Suppressing error: #{e.message}")
+      define_method "accept_#{suffix}" do
+        begin
+          self.method("get_#{suffix}").call
+        rescue StandardError => e
+          logger.debug("Suppressing error")
+        end
       end
-    end
-
-    ##
-    # Requires an admin session. All this means is that the session is
-    # issued for an admin user (role == 1000).
-    #
-    def require_admin_token
-      logger.debug("Requiring admin token")
-      get_token(required_role: Roles::ADMIN)
     end
 
     ##
