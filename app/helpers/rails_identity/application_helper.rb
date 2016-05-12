@@ -101,7 +101,7 @@ module RailsIdentity
       define_method "accept_#{suffix}" do
         begin
           self.method("get_#{suffix}").call
-        rescue StandardError => e
+        rescue StandardError
           logger.debug("Suppressing error")
         end
       end
@@ -164,7 +164,7 @@ module RailsIdentity
       # An Repia::Errors::Unauthorized is thrown for all cases where token is
       # invalid.
       #
-      def verify_token(token, required_role: Roles::PUBLIC)
+      def verify_token(token)
         logger.debug("Verifying token: #{token}")
 
         # First get the payload of the token. This will also verify whether
@@ -175,6 +175,7 @@ module RailsIdentity
         user_uuid = payload["user_uuid"]
         session_uuid = payload["session_uuid"]
         if user_uuid.nil? || session_uuid.nil?
+          logger.error("User or session is not specified")
           raise Repia::Errors::Unauthorized, "Invalid token"
         end
         logger.debug("Token well defined: #{token}")
@@ -184,10 +185,12 @@ module RailsIdentity
         # the user.
         auth_user = User.find_by_uuid(user_uuid)
         if auth_user.nil?
+          logger.error("Specified user doesn't exist #{user_uuid}")
           raise Repia::Errors::Unauthorized, "Invalid token"
         end
         auth_session = Session.find_by_uuid(session_uuid)
         if auth_session.nil? || auth_session.user != auth_user
+          logger.error("Specified session doesn't exist #{session_uuid}")
           raise Repia::Errors::Unauthorized, "Invalid token"
         end
 
@@ -213,7 +216,6 @@ module RailsIdentity
       #
       def get_token(required_role: Roles::PUBLIC)
         token = params[:token]
-        payload = get_token_payload(token)
 
         # Look up the cache. If present, use it and skip the verification.
         # Use token itself (and not a session UUID) as part of the key so
@@ -223,13 +225,14 @@ module RailsIdentity
         # Cache miss. So proceed to verify the token and get user and
         # session data from database. Then set the cache for later.
         if @auth_session.nil?
-          @auth_session = verify_token(token, required_role: required_role)
+          @auth_session = verify_token(token)
           @auth_session.role  # NOTE: no-op
           Cache.set({kind: :session, token: token}, @auth_session)
         end
 
         # Obtained session may not have enough permission. Check here.
         if @auth_session.role < required_role
+          logger.error("Not enough permission (role: #{@auth_session.role})")
           raise Repia::Errors::Unauthorized, "Invalid token"
         end
         @auth_user = @auth_session.user
