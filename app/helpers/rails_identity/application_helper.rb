@@ -108,7 +108,8 @@ module RailsIdentity
     end
 
     ##
-    # Determines if the user is authorized for the object.
+    # Determines if the user is authorized for the object. The user must be
+    # either the creator of the object or must be an admin or above.
     #
     def authorized?(obj)
       logger.debug("Checking to see if authorized to access object")
@@ -134,23 +135,25 @@ module RailsIdentity
       # An Repia::Errors::Unauthorized is raised if token cannot be decoded.
       #
       def get_token_payload(token)
-        begin
-          decoded = JWT.decode token, nil, false
-        rescue JWT::DecodeError => e
-          logger.error("Token decode error: #{e.message}")
-          raise Repia::Errors::Unauthorized, "Invalid token: #{token}"
-        end
+
+        # Attempt to decode without verifying. May raise DecodeError.
+        decoded = JWT.decode token, nil, false
+        payload = decoded[0]
 
         # At this point, we know that the token is not expired and
         # well formatted. Find out if the payload is well defined.
-        payload = decoded[0]
         if payload.nil?
           # :nocov:
           logger.error("Token payload is nil: #{token}")
-          raise Repia::Errors::Unauthorized, "Invalid token payload: #{token}"
+          raise Repia::Errors::Unauthorized, "Invalid token"
           # :nocov:
         end
+
         return payload
+
+      rescue JWT::DecodeError => e
+        logger.error("Token decode error: #{e.message}")
+        raise Repia::Errors::Unauthorized, "Invalid token"
       end
 
       ##
@@ -161,36 +164,44 @@ module RailsIdentity
       # An Repia::Errors::Unauthorized is thrown for all cases where token is
       # invalid.
       #
-      def verify_token_payload(token, payload, required_role: Roles::PUBLIC)
+      def verify_token(token, required_role: Roles::PUBLIC)
+        logger.debug("Verifying token: #{token}")
+
+        # First get the payload of the token. This will also verify whether
+        # or not the token is welformed.
+        payload = get_token_payload(token)
+
+        # Next, the payload should define user UUID and session UUID.
         user_uuid = payload["user_uuid"]
         session_uuid = payload["session_uuid"]
         if user_uuid.nil? || session_uuid.nil?
-          logger.error("User UUID or session UUID is nil")
-          raise Repia::Errors::Unauthorized,
-                "Invalid token payload content: #{token}"
+          raise Repia::Errors::Unauthorized, "Invalid token"
         end
-        logger.debug("Token well formatted for user #{user_uuid},
-                     session #{session_uuid}")
+        logger.debug("Token well defined: #{token}")
 
-        logger.debug("Cache miss. Try database.")
+        # But, the user UUID and session UUID better be valid too. That is,
+        # they must be real user and session, and the session must belong to
+        # the user.
         auth_user = User.find_by_uuid(user_uuid)
-        if auth_user.nil? || auth_user.role < required_role
-          raise Repia::Errors::Unauthorized,
-                "Well-formed but invalid user token: #{token}"
+        if auth_user.nil?
+          raise Repia::Errors::Unauthorized, "Invalid token"
         end
         auth_session = Session.find_by_uuid(session_uuid)
-        if auth_session.nil?
-          raise Repia::Errors::Unauthorized,
-                "Well-formed but invalid session token: #{token}"
+        if auth_session.nil? || auth_session.user != auth_user
+          raise Repia::Errors::Unauthorized, "Invalid token"
         end
-        begin
-          JWT.decode token, auth_session.secret, true
-        rescue JWT::DecodeError => e
-          logger.error(e.message)
-          raise Repia::Errors::Unauthorized, "Cannot verify token: #{token}"
-        end
+
+        # Finally, decode the token using the secret. Also check expiration
+        # here too.
+        JWT.decode token, auth_session.secret, true
         logger.debug("Token well formatted and verified. Set cache.")
+
+        # Return the corresponding session
         return auth_session
+
+      rescue JWT::DecodeError => e
+        logger.error(e.message)
+        raise Repia::Errors::Unauthorized, "Invalid token"
       end
 
       ##
@@ -203,16 +214,23 @@ module RailsIdentity
       def get_token(required_role: Roles::PUBLIC)
         token = params[:token]
         payload = get_token_payload(token)
+
         # Look up the cache. If present, use it and skip the verification.
-        # Use token itself as part of the key so it's *verified*.
+        # Use token itself (and not a session UUID) as part of the key so
+        # it can be considered *verified*.
         @auth_session = Cache.get(kind: :session, token: token)
+
+        # Cache miss. So proceed to verify the token and get user and
+        # session data from database. Then set the cache for later.
         if @auth_session.nil?
-          @auth_session = verify_token_payload(token, payload,
-                                               required_role: required_role)
+          @auth_session = verify_token(token, required_role: required_role)
           @auth_session.role  # NOTE: no-op
           Cache.set({kind: :session, token: token}, @auth_session)
-        elsif @auth_session.role < required_role
-          raise Repia::Errors::Unauthorized
+        end
+
+        # Obtained session may not have enough permission. Check here.
+        if @auth_session.role < required_role
+          raise Repia::Errors::Unauthorized, "Invalid token"
         end
         @auth_user = @auth_session.user
         @token = @auth_session.token
