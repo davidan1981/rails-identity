@@ -17,13 +17,12 @@ to demonstrate making HTTP requests from the command line.
 ## Features
 
 * Mountable Rails engine
-* RESTful API
-* JWT-based session management
-* API key-based access
-* Email verification token
-* Password reset token
-* Authorization cache for performance
-* STI `User` model
+* JWT-based session management API (REST)
+* API key
+* Email verification workflow
+* Password reset workflow
+* Cache
+* STI `User` model for expansion
 
 ## Install
 
