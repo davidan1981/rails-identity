@@ -127,9 +127,22 @@ module RailsIdentity
       assert json["errors"].length == 1
     end 
 
-    test "public cannot create sessions" do
-      get :index
-      assert_response 401
+    test "user can create session using existing auth" do
+      post :create, token: @token
+      assert_response 201
+    end
+
+    test "user can create session using oauth" do
+      auth_hash = OmniAuth::AuthHash.new()
+      auth_hash.provider = "someauthprovider"
+      auth_hash.uid = "someuniqueid"
+      auth_hash.info = OmniAuth::AuthHash::InfoHash.new()
+      auth_hash.info.name = "someusername"
+      Credentials = Struct.new("Credentials", :token, :expires_at)
+      auth_hash.credentials = Credentials.new("sometoken", Time.now.to_i)
+      @request.env["omniauth.auth"] = auth_hash
+      post :create
+      assert_response 201
     end
 
     test "user can show session" do

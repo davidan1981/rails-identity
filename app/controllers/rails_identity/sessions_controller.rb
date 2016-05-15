@@ -45,15 +45,15 @@ module RailsIdentity
       # See if OAuth is used first. When authenticated successfully, either
       # the existing user will be found or a new user will be created.
       # Failure will be redirected to this action but will not match this
-      # branch. TODO: verify this.
-      if env["omniauth.auth"]
-        @user = User.from_omniauth(env["omniauth.auth"])
+      # branch.
+      if request.env["omniauth.auth"]
+        @user = User.from_omniauth_hash(request.env["omniauth.auth"])
 
       # Then see if the request already has authentication. Note that if the
       # user does not have access to the specified session owner, 401 will
       # be thrown.
-      elsif @auth_user
-        @user = get_user()
+      elsif accept_auth
+        @user = @auth_user
 
       # Otherwise, it's a normal login process. Use username and password to
       # authenticate. The user must exist, the password must be vaild, and

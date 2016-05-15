@@ -103,6 +103,7 @@ module RailsIdentity
           self.method("get_#{suffix}").call
         rescue StandardError
           logger.debug("Suppressing error")
+          return false
         end
       end
     end
@@ -185,8 +186,10 @@ module RailsIdentity
         # the user.
         auth_user = User.find_by_uuid(user_uuid)
         if auth_user.nil?
+          # :nocov:
           logger.error("Specified user doesn't exist #{user_uuid}")
           raise Repia::Errors::Unauthorized, "Invalid token"
+          # :nocov:
         end
         auth_session = Session.find_by_uuid(session_uuid)
         if auth_session.nil? || auth_session.user != auth_user
@@ -237,6 +240,7 @@ module RailsIdentity
         end
         @auth_user = @auth_session.user
         @token = @auth_session.token
+        return true
       end
 
       ##
@@ -261,6 +265,7 @@ module RailsIdentity
         @auth_user = auth_user
         @auth_session = nil
         @token = nil
+        return true
       end
 
       ##

@@ -20,3 +20,5 @@ gem 'paranoia', '~> 2.0'
 gem 'repia', '~> 0.1.1'
 gem 'simplecov', :require => false, :group => :test
 gem 'uuidtools', '~> 2.1.5'
+gem 'hashie', '~> 3.4.4'
+gem 'omniauth', '~> 1.3.1'

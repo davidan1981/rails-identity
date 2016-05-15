@@ -2,11 +2,11 @@ module RailsIdentity
   class User < ActiveRecord::Base
     include Repia::UUIDModel
     acts_as_paranoid
-    has_secure_password
+    has_secure_password validations: false
 
     validates :username, uniqueness: true,
               format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i,
-                        on: [:create, :update] }
+                        on: [:create, :update] }, allow_nil: true
     validates :password, confirmation: true
     validate :valid_user
     before_save :default_role
@@ -18,24 +18,27 @@ module RailsIdentity
     # username and password exist OR oauth integration exists.
     #
     def valid_user
-      return (self.username && self.password) ||
-             (self.oauth_provider && self.oauth_uid)
+      if (self.username.blank? || self.password_digest.blank?) &&
+          (self.oauth_provider.blank? || self.oauth_uid.blank?)
+        errors.add(:username, " and password OR oauth must be specified")
+      end
     end
 
     ##
     # Create a user from oauth.
     #
-    def self.from_omniauth(auth)
+    def self.from_omniauth_hash(auth_hash)
       params = {
-        oauth_provider: auth[:provider],
-        oauth_uid: auth[:uid]
+        oauth_provider: auth_hash.provider,
+        oauth_uid: auth_hash.uid
       }
-      where(params).first_or_initialize.tap do |user|
-        user.oauth_provider = auth.provider
-        user.oauth_uid = auth.uid
-        user.oauth_name = auth.info.name
-        user.oauth_token = auth.credentials.token
-        user.oauth_expires_at = Time.at(auth.credentials.expires_at)
+      where(params).first_or_initialize(attributes={}) do |user|
+        user.oauth_provider = auth_hash.provider
+        user.oauth_uid = auth_hash.uid
+        user.oauth_name = auth_hash.info.name
+        user.oauth_token = auth_hash.credentials.token
+        user.oauth_expires_at = Time.at(auth_hash.credentials.expires_at)
+        user.verified = true
         user.save!
       end
     end
