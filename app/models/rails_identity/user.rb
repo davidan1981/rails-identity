@@ -4,13 +4,41 @@ module RailsIdentity
     acts_as_paranoid
     has_secure_password
 
-    validates :username, presence: true, uniqueness: true,
+    validates :username, uniqueness: true,
               format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i,
                         on: [:create, :update] }
     validates :password, confirmation: true
+    validate :valid_user
     before_save :default_role
 
     alias_attribute :email, :username
+
+    ##
+    # This method validates if the user object is valid. A user is valid if
+    # username and password exist OR oauth integration exists.
+    #
+    def valid_user
+      return (self.username && self.password) ||
+             (self.oauth_provider && self.oauth_uid)
+    end
+
+    ##
+    # Create a user from oauth.
+    #
+    def self.from_omniauth(auth)
+      params = {
+        oauth_provider: auth[:provider],
+        oauth_uid: auth[:uid]
+      }
+      where(params).first_or_initialize.tap do |user|
+        user.oauth_provider = auth.provider
+        user.oauth_uid = auth.uid
+        user.oauth_name = auth.info.name
+        user.oauth_token = auth.credentials.token
+        user.oauth_expires_at = Time.at(auth.credentials.expires_at)
+        user.save!
+      end
+    end
 
     ##
     # Initializes the user. User is not verified initially. The user has one

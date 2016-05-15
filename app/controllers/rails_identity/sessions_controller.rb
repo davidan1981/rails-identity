@@ -41,19 +41,39 @@ module RailsIdentity
     # A Repia::Errors::Unauthorized is thrown if user is not verified.
     #
     def create
-      @user = User.find_by_username(session_params[:username])
-      if (@user && @user.authenticate(session_params[:password])) || get_user()
-        raise Repia::Errors::Unauthorized unless @user.verified
-        @session = Session.new(user: @user)
-        if @session.save
-          render json: @session, except: [:secret], status: 201
-        else
-          # :nocov:
-          render_errors 400, @session.full_error_messages
-          # :nocov:
-        end
+
+      # See if OAuth is used first. When authenticated successfully, either
+      # the existing user will be found or a new user will be created.
+      # Failure will be redirected to this action but will not match this
+      # branch. TODO: verify this.
+      if env["omniauth.auth"]
+        @user = User.from_omniauth(env["omniauth.auth"])
+
+      # Then see if the request already has authentication. Note that if the
+      # user does not have access to the specified session owner, 401 will
+      # be thrown.
+      elsif @auth_user
+        @user = get_user()
+
+      # Otherwise, it's a normal login process. Use username and password to
+      # authenticate. The user must exist, the password must be vaild, and
+      # the email must have been verified.
       else
-        render_error 401, "Invalid username or password"
+        @user = User.find_by_username(session_params[:username])
+        if (@user.nil? || !@user.authenticate(session_params[:password]) ||
+            !@user.verified)
+          raise Repia::Errors::Unauthorized
+        end
+      end
+
+      # Finally, create session regardless of the method and store it.
+      @session = Session.new(user: @user)
+      if @session.save
+        render json: @session, except: [:secret], status: 201
+      else
+        # :nocov:
+        render_errors 400, @session.full_error_messages
+        # :nocov:
       end
     end
 

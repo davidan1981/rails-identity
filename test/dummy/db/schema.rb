@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160507014709) do
+ActiveRecord::Schema.define(version: 20160514213544) do
 
   create_table "rails_identity_sessions", id: false, force: :cascade do |t|
     t.string   "uuid"
@@ -37,9 +37,15 @@ ActiveRecord::Schema.define(version: 20160507014709) do
     t.boolean  "verified",           default: false
     t.string   "type"
     t.string   "api_key"
+    t.string   "oauth_provider"
+    t.string   "oauth_uid"
+    t.string   "oauth_name"
+    t.string   "oauth_token"
+    t.string   "oauth_expires_at"
   end
 
   add_index "rails_identity_users", ["api_key"], name: "index_rails_identity_users_on_api_key"
   add_index "rails_identity_users", ["deleted_at"], name: "index_rails_identity_users_on_deleted_at"
+  add_index "rails_identity_users", ["oauth_provider", "oauth_uid"], name: "index_rails_identity_users_on_oauth_provider_and_oauth_uid"
 
 end

@@ -1,7 +1,9 @@
 module RailsIdentity
   class Session < ActiveRecord::Base
     include Repia::UUIDModel
-    # does not act as paranoid!
+
+    # Does not act as paranoid since session objects will be frequently
+    # created.
 
     belongs_to :user, foreign_key: "user_uuid", primary_key: "uuid"
     validates :user, presence: true
@@ -40,6 +42,9 @@ module RailsIdentity
       return false
     end
 
+    ##
+    # Returns the role of the session user.
+    #
     def role
       if @role.nil?
         @role = user.role
