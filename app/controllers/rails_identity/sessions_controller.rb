@@ -46,8 +46,8 @@ module RailsIdentity
       # the existing user will be found or a new user will be created.
       # Failure will be redirected to this action but will not match this
       # branch.
-      if request.env["omniauth.auth"]
-        @user = User.from_omniauth_hash(request.env["omniauth.auth"])
+      if (omniauth_hash = request.env["omniauth.auth"])
+        @user = User.from_omniauth_hash(omniauth_hash)
 
       # Then see if the request already has authentication. Note that if the
       # user does not have access to the specified session owner, 401 will
@@ -69,7 +69,13 @@ module RailsIdentity
       # Finally, create session regardless of the method and store it.
       @session = Session.new(user: @user)
       if @session.save
-        render json: @session, except: [:secret], status: 201
+        if omniauth_hash
+          # redirect_to the app page that accepts new session token
+          url = Rails.application.config.oauth_landing_page_url
+          redirect_to url, status: 302
+        else
+          render json: @session, except: [:secret], status: 201
+        end
       else
         # :nocov:
         render_errors 400, @session.full_error_messages

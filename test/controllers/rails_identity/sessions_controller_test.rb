@@ -142,7 +142,7 @@ module RailsIdentity
       auth_hash.credentials = Credentials.new("sometoken", Time.now.to_i)
       @request.env["omniauth.auth"] = auth_hash
       post :create
-      assert_response 201
+      assert_response 302
     end
 
     test "user can show session" do
