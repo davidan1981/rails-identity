@@ -23,6 +23,7 @@ to demonstrate making HTTP requests from the command line.
 * Password reset workflow
 * Cache
 * STI `User` model for expansion
+* OAuth user creation
 
 ## Install
 
@@ -78,6 +79,23 @@ email verification token and password reset token. Note that the
 default email template is not sufficient for real use. 
 You must define your own mailer action views to cater emails for 
 your need.
+
+To use OAuth, you must configure two endpoints. First, specify
+`oauth_landing_page_url` to the URL that will assign token (from query
+string) to a temporary storage such as cookie.
+
+    config.oauth_landing_page_url = '/oauth_success'
+
+Once OAuth callback is successful, the controller will response a redirect
+(302) to the URL specified above with `token=<actual token>` as a query
+string.
+
+Second, set a route for oauth failure.
+
+    get 'auth/failure', redirect_to('/oauth_failure')
+
+This page should simply display failed authentication.
+
 
 ### Other Changes
 

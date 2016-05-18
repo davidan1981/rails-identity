@@ -6,5 +6,5 @@ RailsIdentity::Engine.routes.draw do
   match 'users(/:id)' => 'users#options', via: [:options]
 
   get 'auth/:provider/callback', to: 'sessions#create'
-  get 'auth/failure', to: 'session#create'  # will 401
+  # get 'auth/failure', to: 'session#create'
 end
