@@ -72,7 +72,8 @@ module RailsIdentity
         if omniauth_hash
           # redirect_to the app page that accepts new session token
           url = Rails.application.config.oauth_landing_page_url
-          redirect_to url, status: 302
+          url = "#{url}?token=#{@session.token}"
+          render inline: "", status: 302, location: url
         else
           render json: @session, except: [:secret], status: 201
         end

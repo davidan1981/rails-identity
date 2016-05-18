@@ -189,7 +189,8 @@ module RailsIdentity
       def user_params
         # Only ADMIN can assign the attribute role. The attribute value will
         # be ignored if the user is not an ADMIN.
-        if @auth_user.try(:role).try(:>=, Roles::ADMIN)
+        if instance_variable_defined?(:@auth_user) && 
+            @auth_user.try(:role).try(:>=, Roles::ADMIN)
           params.permit(:username, :password, :password_confirmation, :role, :verified)
         else
           params.permit(:username, :password, :password_confirmation, :verified)

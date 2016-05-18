@@ -143,6 +143,9 @@ module RailsIdentity
       @request.env["omniauth.auth"] = auth_hash
       post :create
       assert_response 302
+      user = User.find_by_oauth_provider_and_oauth_uid("someauthprovider", "someuniqueid")
+      session = Session.find_by_user_uuid(user.uuid)
+      assert_includes @response.location, session.token
     end
 
     test "user can show session" do

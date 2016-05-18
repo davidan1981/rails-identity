@@ -46,7 +46,7 @@ module RailsIdentity
     # Returns the role of the session user.
     #
     def role
-      if @role.nil?
+      if !instance_variable_defined?(:@role)
         @role = user.role
       end
       return @role
