@@ -10,10 +10,10 @@ module RailsIdentity
 
     def self.cache_key(key)
       if key.is_a? Hash
-        key["_version"] = VERSION
+        key["_version"] = CACHE_VERSION
         return key
       else
-        return {key: key, _version: VERSION}
+        return {key: key, _version: CACHE_VERSION}
       end
     end
 
