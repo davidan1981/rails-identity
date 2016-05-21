@@ -3,6 +3,14 @@ module RailsIdentity
     include Repia::BaseHelper
 
     ##
+    # Determines if the authenticated user is admin or not.
+    #
+    def has_admin_auth?
+      return instance_variable_defined?(:@auth_user) && 
+          @auth_user.try(:role).try(:>=, Roles::ADMIN)
+    end
+
+    ##
     # Helper method to get the user object in the request, which is
     # specified by :user_id parameter. There are two ways to specify the
     # user id--one in the routing or the auth context.

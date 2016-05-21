@@ -23,7 +23,7 @@ to demonstrate making HTTP requests from the command line.
 * Password reset workflow
 * Cache
 * STI `User` model for expansion
-* OAuth user creation
+* OAuth authentication
 
 ## Install
 
@@ -147,7 +147,7 @@ This request will send an email verification token to the user's email.
 The app should craft the linked page to use the verification token to
 start a session and set `verified` to true by the following:
 
-    http PATCH localhost:3000/users/current token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0 verified=true
+    http PATCH localhost:3000/users/current verified=true token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOm51bGwsInNlc3Npb25fdXVpZCI6IjU5YTQwODRjLTAwNWMtMTFlNi1hN2ExLTZjNDAwOGE2ZmEyYSIsInJvbGUiOm51bGwsImlhdCI6MTQ2MDQzMDczMiwiZXhwIjoxNDYwNDM0MzMyfQ.rdi5JT5NzI9iuXjWfhXjYhc0xF-aoVAaAPWepgSUaH0
     
 Note that `current` can be used when UUID is unknown but the token is
 specified.  Also note that, if user's `verified` is `false`, some endpoints
@@ -169,7 +169,9 @@ A proper way to create a session is to use username and password:
         "uuid": "b6fadba4-fad2-11e5-8fc3-6c4008a6fa2a"
     }
 
-Notice this is essentially a login process for single-page apps.
+Notice this is essentially a login process for single-page apps. The client
+app should store the value of `token` in either `localStore` or `cookie`.
+(To allow cross-domain, you may want to use `cookie`.)
 
 ### Delete Session
 
@@ -180,13 +182,16 @@ process.
 
     HTTP/1.1 204 No Content
 
+Make sure to remove the token from its storage. The old tokens will no
+longer work.
+
 ### Password Reset
 
 Since rails-identity is a RESTful service itself, password reset is done via
 a PATCH method on the user resource. But you must specify either the old
 password or a reset token. To use the old password:
 
-    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ old_password="supersecret" password="reallysecret" password_confirmation="reallysecret"
+    $ http PATCH localhost:3000/users/68ddbb3a-fad2-11e5-8fc3-6c4008a6fa2a old_password="supersecret" password="reallysecret" password_confirmation="reallysecret" token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiJiNmZhZGJhNC1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5ODIxODYyLCJleHAiOjE0NjEwMzE0NjJ9.B9Ld00JvHUZT37THrwFrHzUwxIx6s3UFPbVCCwYzRrQ
 
 To use a reset token, you must issue one first:
 
@@ -202,7 +207,7 @@ Note that the response includes a JWT token that looks similar to a normal
 session token. Well a surprise! It _is_ a session token but with a shorter life span (1
 hour). So use it instead on the password reset request:
 
-    http PATCH localhost:3000/users/current token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg password="reallysecret" password_confirmation="reallysecret"
+    http PATCH localhost:3000/users/current password="reallysecret" password_confirmation="reallysecret" token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX3V1aWQiOiI2OGRkYmIzYS1mYWQyLTExZTUtOGZjMy02YzQwMDhhNmZhMmEiLCJzZXNzaW9uX3V1aWQiOiIzYjI5ZGI4OC1mYjlhLTExZTUtODNhOC02YzQwMDhhNmZhMmEiLCJyb2xlIjoxMCwiaWF0IjoxNDU5OTA3NTU0LCJleHAiOjE0NTk5MTExNTR9.g4iosqm8dOVUL5ErtCggsNAOs4WQV2u-heAUPf145jg
 
     HTTP/1.1 200 OK
     {
