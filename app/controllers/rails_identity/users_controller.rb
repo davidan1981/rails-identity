@@ -172,7 +172,7 @@ module RailsIdentity
           params[:id] = @auth_user.uuid
         end
         @user = find_object(User, params[:id])
-        raise Repia::Errors::Unauthorized unless authorized?(@user)
+        raise Repia::Errors::Unauthorized unless authorized_for?(@user)
         return @user
       end
 

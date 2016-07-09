@@ -26,7 +26,7 @@ module RailsIdentity
       logger.debug("Attempting to get user #{user_id}")
       if !user_id.nil? && user_id != "current"
         @user = find_object(User, params[:user_id])  # will throw error if nil
-        unless authorized?(@user)
+        unless authorized_for?(@user)
           raise Repia::Errors::Unauthorized,
                 "Not authorized to access user #{user_id}"
         end
@@ -120,7 +120,7 @@ module RailsIdentity
     # Determines if the user is authorized for the object. The user must be
     # either the creator of the object or must be an admin or above.
     #
-    def authorized?(obj)
+    def authorized_for?(obj)
       logger.debug("Checking to see if authorized to access object")
       if @auth_user.nil?
         # :nocov:
@@ -134,6 +134,11 @@ module RailsIdentity
         return obj.try(:user) == @auth_user
       end
     end
+
+    ##
+    # Deprecated: use authorized_for? instead.
+    #
+    def authorized?(obj); authorized_for?(obj) end
 
     protected
 
