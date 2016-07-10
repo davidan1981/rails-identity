@@ -15,10 +15,10 @@ module RailsIdentity
     # specified by :user_id parameter. There are two ways to specify the
     # user id--one in the routing or the auth context.
     #
-    # An Repia::Errors::Unauthorized is raised if the authenticated user is
+    # A Repia::Errors::Unauthorized is raised if the authenticated user is
     # not authorized for the specified user information.
     #
-    # An Repia::Errors::NotFound is raised if the specified user cannot
+    # A Repia::Errors::NotFound is raised if the specified user cannot
     # be found.
     # 
     def get_user(fallback: true)
@@ -26,10 +26,7 @@ module RailsIdentity
       logger.debug("Attempting to get user #{user_id}")
       if !user_id.nil? && user_id != "current"
         @user = find_object(User, params[:user_id])  # will throw error if nil
-        unless authorized_for?(@user)
-          raise Repia::Errors::Unauthorized,
-                "Not authorized to access user #{user_id}"
-        end
+        authorize_for!(@user)
       elsif fallback || user_id == "current"
         @user = @auth_user
       else
@@ -134,11 +131,28 @@ module RailsIdentity
         return obj.try(:user) == @auth_user
       end
     end
+    alias_method :authorize_for?, :authorized_for?
 
     ##
     # Deprecated: use authorized_for? instead.
     #
     def authorized?(obj); authorized_for?(obj) end
+
+    ##
+    # Authorize the user for a specified object. If the user does not have
+    # permission, it will throw an exception. Note that it is sometimes not
+    # desirable to provide detailed information about authorization failure.
+    # Note that this will not include this detail in the exception.
+    #
+    # A Repia::Errors::Unauthorized is raised.
+    #
+    def authorize_for!(obj)
+      if !authorized_for?(obj)
+        logger.error("User #{@auth_user.uuid} does not have permission " +
+                     "to access #{obj}")
+        raise Repia::Errors::Unauthorized
+      end
+    end
 
     protected
 
@@ -146,7 +160,7 @@ module RailsIdentity
       # Attempts to retrieve the payload encoded in the token. It checks if
       # the token is "valid" according to JWT definition and not expired.
       #
-      # An Repia::Errors::Unauthorized is raised if token cannot be decoded.
+      # A Repia::Errors::Unauthorized is raised if token cannot be decoded.
       #
       def get_token_payload(token)
 
@@ -175,7 +189,7 @@ module RailsIdentity
       # session specified in the token payload are indeed valid. The
       # required role is also checked.
       #
-      # An Repia::Errors::Unauthorized is thrown for all cases where token is
+      # A Repia::Errors::Unauthorized is thrown for all cases where token is
       # invalid.
       #
       def verify_token(token)

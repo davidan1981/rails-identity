@@ -124,9 +124,8 @@ module RailsIdentity
           session_id = @auth_session.id
         end
         @session = find_object(Session, session_id)
-        if !authorized_for?(@session)
-          raise Repia::Errors::Unauthorized
-        elsif @session.expired?
+        authorize_for!(@session)
+        if @session.expired?
           @session.destroy
           raise Repia::Errors::NotFound
         end
