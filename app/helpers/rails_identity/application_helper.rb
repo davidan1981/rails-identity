@@ -2,6 +2,10 @@ module RailsIdentity
   module ApplicationHelper
     include Repia::BaseHelper
 
+    # Respect the config first. If not specified, use 401 Unauthorized.
+    UNAUTHORIZED_ERROR = Rails.application.config.try(:unauthorized_error) ||
+        Repia::Errors::Unauthorized
+
     ##
     # Determines if the authenticated user is admin or not.
     #
@@ -15,7 +19,7 @@ module RailsIdentity
     # specified by :user_id parameter. There are two ways to specify the
     # user id--one in the routing or the auth context.
     #
-    # A Repia::Errors::Unauthorized is raised if the authenticated user is
+    # A UNAUTHORIZED_ERROR is raised if the authenticated user is
     # not authorized for the specified user information.
     #
     # A Repia::Errors::NotFound is raised if the specified user cannot
@@ -144,13 +148,13 @@ module RailsIdentity
     # desirable to provide detailed information about authorization failure.
     # Note that this will not include this detail in the exception.
     #
-    # A Repia::Errors::Unauthorized is raised.
+    # A UNAUTHORIZED_ERROR is raised.
     #
     def authorize_for!(obj)
       if !authorized_for?(obj)
         logger.error("User #{@auth_user.uuid} does not have permission " +
                      "to access #{obj}")
-        raise Repia::Errors::Unauthorized
+        raise UNAUTHORIZED_ERROR
       end
     end
 
@@ -160,7 +164,7 @@ module RailsIdentity
       # Attempts to retrieve the payload encoded in the token. It checks if
       # the token is "valid" according to JWT definition and not expired.
       #
-      # A Repia::Errors::Unauthorized is raised if token cannot be decoded.
+      # A UNAUTHORIZED_ERROR is raised if token cannot be decoded.
       #
       def get_token_payload(token)
 
@@ -173,7 +177,7 @@ module RailsIdentity
         if payload.nil?
           # :nocov:
           logger.error("Token payload is nil: #{token}")
-          raise Repia::Errors::Unauthorized, "Invalid token"
+          raise UNAUTHORIZED_ERROR, "Invalid token"
           # :nocov:
         end
 
@@ -181,7 +185,7 @@ module RailsIdentity
 
       rescue JWT::DecodeError => e
         logger.error("Token decode error: #{e.message}")
-        raise Repia::Errors::Unauthorized, "Invalid token"
+        raise UNAUTHORIZED_ERROR, "Invalid token"
       end
 
       ##
@@ -189,7 +193,7 @@ module RailsIdentity
       # session specified in the token payload are indeed valid. The
       # required role is also checked.
       #
-      # A Repia::Errors::Unauthorized is thrown for all cases where token is
+      # A UNAUTHORIZED_ERROR is thrown for all cases where token is
       # invalid.
       #
       def verify_token(token)
@@ -204,7 +208,7 @@ module RailsIdentity
         session_uuid = payload["session_uuid"]
         if user_uuid.nil? || session_uuid.nil?
           logger.error("User or session is not specified")
-          raise Repia::Errors::Unauthorized, "Invalid token"
+          raise UNAUTHORIZED_ERROR, "Invalid token"
         end
         logger.debug("Token well defined: #{token}")
 
@@ -215,13 +219,13 @@ module RailsIdentity
         if auth_user.nil?
           # :nocov:
           logger.error("Specified user doesn't exist #{user_uuid}")
-          raise Repia::Errors::Unauthorized, "Invalid token"
+          raise UNAUTHORIZED_ERROR, "Invalid token"
           # :nocov:
         end
         auth_session = Session.find_by_uuid(session_uuid)
         if auth_session.nil? || auth_session.user != auth_user
           logger.error("Specified session doesn't exist #{session_uuid}")
-          raise Repia::Errors::Unauthorized, "Invalid token"
+          raise UNAUTHORIZED_ERROR, "Invalid token"
         end
 
         # Finally, decode the token using the secret. Also check expiration
@@ -234,14 +238,14 @@ module RailsIdentity
 
       rescue JWT::DecodeError => e
         logger.error(e.message)
-        raise Repia::Errors::Unauthorized, "Invalid token"
+        raise UNAUTHORIZED_ERROR, "Invalid token"
       end
 
       ##
       # Attempt to get a token for the session. Token must be specified in
       # query string or part of the JSON object.
       #
-      # Raises a Repia::Errors::Unauthorized if cached session has less role
+      # Raises a UNAUTHORIZED_ERROR if cached session has less role
       # than what's required.
       #
       def get_token(required_role: Roles::PUBLIC)
@@ -263,7 +267,7 @@ module RailsIdentity
         # Obtained session may not have enough permission. Check here.
         if @auth_session.role < required_role
           logger.error("Not enough permission (role: #{@auth_session.role})")
-          raise Repia::Errors::Unauthorized, "Invalid token"
+          raise UNAUTHORIZED_ERROR, "Invalid token"
         end
         @auth_user = @auth_session.user
         @token = @auth_session.token
@@ -273,7 +277,7 @@ module RailsIdentity
       ##
       # Get API key from the request.
       #
-      # Raises a Repia::Errors::Unauthorized if API key is not valid (or not
+      # Raises a UNAUTHORIZED_ERROR if API key is not valid (or not
       # provided).
       #
       def get_api_key(required_role: Roles::PUBLIC)
@@ -282,12 +286,12 @@ module RailsIdentity
           # This case is not likely, but as a safeguard in case migration
           # has not gone well.
           # :nocov:
-          raise Repia::Errors::Unauthorized, "Invalid api key"
+          raise UNAUTHORIZED_ERROR, "Invalid api key"
           # :nocov:
         end
         auth_user = User.find_by_api_key(api_key)
         if auth_user.nil? || auth_user.role < required_role
-          raise Repia::Errors::Unauthorized, "Invalid api key"
+          raise UNAUTHORIZED_ERROR, "Invalid api key"
         end
         @auth_user = auth_user
         @auth_session = nil

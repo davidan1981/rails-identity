@@ -26,6 +26,9 @@ module Dummy
     # For some reason, file store will not work well in Linux. Of course, in
     # reality, this should be something better than memory store.
     config.cache_store = :memory_store, { size: 64.megabytes }
+
+    # Uncomment this to use 403 Forbidden instead of 401 Unauthorized
+    # config.unauthorized_error = Repia::Errors::Forbidden
   end
 end
 

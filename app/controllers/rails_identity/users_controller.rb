@@ -77,7 +77,7 @@ module RailsIdentity
         # For issuing a reset token, one does not need an auth token. so do
         # not authorize the request. For consistency, we require the id to
         # be "current".
-        raise Repia::Errors::Unauthorized unless params[:id] == "current"
+        raise ApplicationController::UNAUTHORIZED_ERROR unless params[:id] == "current"
         get_user_for_token()
         if params[:issue_reset_token]
           update_token(:reset_token)
@@ -117,17 +117,17 @@ module RailsIdentity
       # Check if password change should be allowed. Two ways to do this: one
       # is to use old password or to use a valid reset token.
       #
-      # A Repia::Errors::Unauthorized is thrown for invalid old password or
+      # A ApplicationController::UNAUTHORIZED_ERROR is thrown for invalid old password or
       # invalid reset token
       #
       def allow_password_change?
         if params[:old_password]
           unless @user.authenticate(params[:old_password])
-            raise Repia::Errors::Unauthorized 
+            raise ApplicationController::UNAUTHORIZED_ERROR 
           end
         else
           unless @token == @user.reset_token
-            raise Repia::Errors::Unauthorized
+            raise ApplicationController::UNAUTHORIZED_ERROR
           end
         end
         return true
@@ -168,7 +168,7 @@ module RailsIdentity
       #
       def get_user
         if params[:id] == "current"
-          raise Repia::Errors::Unauthorized if @auth_user.nil?
+          raise ApplicationController::UNAUTHORIZED_ERROR if @auth_user.nil?
           params[:id] = @auth_user.uuid
         end
         @user = find_object(User, params[:id])
