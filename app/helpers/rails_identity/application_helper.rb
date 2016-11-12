@@ -154,7 +154,7 @@ module RailsIdentity
       if !authorized_for?(obj)
         logger.error("User #{@auth_user.uuid} does not have permission " +
                      "to access #{obj}")
-        raise UNAUTHORIZED_ERROR
+        raise UNAUTHORIZED_ERROR, "User is not authorized"
       end
     end
 

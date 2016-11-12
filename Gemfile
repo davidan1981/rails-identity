@@ -17,8 +17,10 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'coveralls', require: false
 gem 'jwt', '~> 1.5.4'
 gem 'paranoia', '~> 2.0'
-gem 'repia', '~> 0.1.1'
+# gem 'repia', '~> 0.1.1'
+gem 'repia', path: '/Users/davidan/Projects/Personal/repia'
 gem 'simplecov', :require => false, :group => :test
 gem 'uuidtools', '~> 2.1.5'
 gem 'hashie', '~> 3.4.4'
 gem 'omniauth', '~> 1.3.1'
+gem 'rails-controller-testing'

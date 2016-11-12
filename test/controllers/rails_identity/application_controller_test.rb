@@ -39,7 +39,7 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :require_token, only: [:index]
       end
-      get :index, token: @token
+      get :index, params: { token: @token }
       assert_response :success
       get :index
       assert_response 401
@@ -50,10 +50,10 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :require_admin_token, only: [:index]
       end
-      get :index, token: @admin_token
+      get :index, params: { token: @admin_token }
       assert_response :success
       Cache.set({kind: :session, token: @token}, @session) 
-      get :index, token: @token
+      get :index, params: { token: @token }
       assert_response 401
     end
 
@@ -62,7 +62,7 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :accept_token, only: [:index]
       end
-      get :index, token: @token
+      get :index, params: { token: @token }
       assert_response :success
       get :index
       assert_response :success
@@ -73,9 +73,9 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :require_api_key, only: [:index]
       end
-      get :index, api_key: @api_key
+      get :index, params: { api_key: @api_key }
       assert_response :success
-      get :index, token: @token
+      get :index, params: { token: @token }
       assert_response 401
       get :index
       assert_response 401
@@ -86,9 +86,9 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :require_admin_api_key, only: [:index]
       end
-      get :index, api_key: @admin_api_key
+      get :index, params: { api_key: @admin_api_key }
       assert_response :success
-      get :index, api_key: @api_key
+      get :index, params: { api_key: @api_key }
       assert_response 401
     end
 
@@ -97,7 +97,7 @@ module RailsIdentity
         reset_callbacks :process_action
         before_action :accept_api_key, only: [:index]
       end
-      get :index, api_key: @api_key
+      get :index, params: { api_key: @api_key }
       assert_response :success
       get :index
       assert_response :success
