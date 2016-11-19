@@ -1,4 +1,3 @@
-# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -42,10 +41,9 @@ ActiveRecord::Schema.define(version: 20160514213544) do
     t.string   "oauth_name"
     t.string   "oauth_token"
     t.string   "oauth_expires_at"
+    t.index ["api_key"], name: "index_rails_identity_users_on_api_key"
+    t.index ["deleted_at"], name: "index_rails_identity_users_on_deleted_at"
+    t.index ["oauth_provider", "oauth_uid"], name: "index_rails_identity_users_on_oauth_provider_and_oauth_uid"
   end
-
-  add_index "rails_identity_users", ["api_key"], name: "index_rails_identity_users_on_api_key"
-  add_index "rails_identity_users", ["deleted_at"], name: "index_rails_identity_users_on_deleted_at"
-  add_index "rails_identity_users", ["oauth_provider", "oauth_uid"], name: "index_rails_identity_users_on_oauth_provider_and_oauth_uid"
 
 end

@@ -1,4 +1,4 @@
-class AddOAuthToUsers < ActiveRecord::Migration
+class AddOAuthToUsers < ActiveRecord::Migration[4.2]
   def change
     add_column :rails_identity_users, :oauth_provider, :string
     add_column :rails_identity_users, :oauth_uid, :string

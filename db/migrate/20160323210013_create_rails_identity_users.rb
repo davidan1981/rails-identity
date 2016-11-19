@@ -1,4 +1,4 @@
-class CreateRailsIdentityUsers < ActiveRecord::Migration
+class CreateRailsIdentityUsers < ActiveRecord::Migration[4.2]
   def change
     create_table :rails_identity_users do |t|
       t.string :uuid, primary_key: true, null: false
